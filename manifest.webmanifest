@@ -1,0 +1,30 @@
+{
+  "name": "نینا شاپ | لباس زیر زنانه و لوازم آرایشی",
+  "short_name": "نینا شاپ",
+  "description": "بوتیک آنلاین نینا شاپ: شُرت، سوتین و ست خواب، لوازم آرایشی — با بسته‌بندی محرمانه و ضمانت بازگشت ۷ روزه.",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff8f6",
+  "theme_color": "#e56a92",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "محصولات",
+      "url": "./#products",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "علاقه‌مندی‌های من",
+      "url": "wishlist.html",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
