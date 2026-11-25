@@ -107,7 +107,7 @@
           'author': { '@type': 'Organization', 'name': site.name || 'نینا شاپ' },
           'publisher': { '@type': 'Organization', 'name': site.name || 'نینا شاپ' },
           'mainEntityOfPage': domain + '/post.html?id=' + encodeURIComponent(p.id),
-          'image': domain + '/assets/og.png'
+          'image': domain + '/assets/og.jpg'
         },
         {
           '@type': 'BreadcrumbList',

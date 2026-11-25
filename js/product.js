@@ -66,7 +66,7 @@
     if (ogu) ogu.setAttribute('content', (site.domain || '') .replace(/\/$/, '') + '/product.html?id=' + encodeURIComponent(p.id));
     var ogimg = document.querySelector('meta[property="og:image"]');
     if (ogimg) ogimg.setAttribute('content', (site.domain || '').replace(/\/$/, '') +
-      (p.image ? '/assets/og/' + encodeURIComponent(p.id) + '.jpg' : '/assets/og.png'));
+      (p.image ? '/assets/og/' + encodeURIComponent(p.id) + '.jpg' : '/assets/og.jpg'));
 
     /* برداشتِ نان */
     var crumbs = document.getElementById('crumbs');
