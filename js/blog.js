@@ -127,6 +127,8 @@
 
   function boot() {
     R.initTheme();
+    R.bindBottomNav();
+    R.registerSW();
     R.bindThemeToggle();
     R.paintIcons();
     var y = document.getElementById('year');

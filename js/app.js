@@ -477,56 +477,14 @@
     });
   }
 
-  /* ---------- ناوبریِ پایینِ موبایل: نشانگرِ موجیِ متحرک روی تبِ فعلی ---------- */
-  function bindBottomNav() {
-    var nav = document.querySelector('.bottom-nav');
-    if (!nav) return;
-    var ind = nav.querySelector('.bn-ind');
-    var page = location.pathname.split('/').pop();
-    var key =
-      (page === '' || page === 'index.html') ? (location.hash === '#products' ? 'products' : 'home') :
-      page === 'wishlist.html' ? 'wish' :
-      (page === 'blog.html' || page === 'post.html') ? 'blog' :
-      page === 'faq.html' ? 'faq' : '';
-    var links = nav.querySelectorAll('a[data-bn]');
-    var active = null;
-    for (var i = 0; i < links.length; i++) {
-      if (key && links[i].getAttribute('data-bn') === key) { active = links[i]; links[i].classList.add('active'); }
-    }
-    if (!ind) return;
-    var target = active || links[0];
-    if (!target) return;
-    function x() { return target.offsetLeft + target.offsetWidth / 2 - ind.offsetWidth / 2; }
-    /* ورودِ نرم: اول بی‌صدا و کوچک زیرِ تب می‌نشیند، بعد با فنر پدیدار می‌شود */
-    ind.style.transition = 'none';
-    ind.style.transform = 'translateX(' + x() + 'px) scale(0)';
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () {
-        ind.style.transition = '';
-        if (active) ind.style.transform = 'translateX(' + x() + 'px) scale(1)';
-      });
-    });
-    window.addEventListener('resize', function () {
-      ind.style.transition = 'none';
-      ind.style.transform = 'translateX(' + x() + 'px) scale(' + (active ? '1' : '0') + ')';
-    });
-  }
-
-  /* ---------- PWA: ثبتِ سرویس‌ورکر برایِ نصب و کارکردِ آفلاین ---------- */
-  function registerSW() {
-    if (!('serviceWorker' in navigator)) return;
-    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') return;
-    navigator.serviceWorker.register('sw.js').catch(function () {});
-  }
-
   /* ---------- خطاها را قورت نده؛ جدا از رندر ---------- */
   function boot() {
     R.initTheme();
     R.bindThemeToggle();
     R.paintIcons();
     bindMenu();
-    bindBottomNav();
-    registerSW();
+    R.bindBottomNav();
+    R.registerSW();
     var y = document.getElementById('year');
     if (y) y.textContent = R.fa(new Date().getFullYear());
 

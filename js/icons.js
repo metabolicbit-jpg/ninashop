@@ -265,6 +265,41 @@
     return i === -1; /* true = اضافه شد */
   }
 
+  /* ---------- ناوبریِ پایینِ موبایل: نشانگرِ موجی روی تبِ فعلی (مشترک بینِ همهٔ صفحه‌ها) ---------- */
+  function bindBottomNav() {
+    var nav = document.querySelector('.bottom-nav');
+    if (!nav) return;
+    var ind = nav.querySelector('.bn-ind');
+    var page = location.pathname.split('/').pop();
+    var key =
+      (page === '' || page === 'index.html') ? (location.hash === '#products' ? 'products' : 'home') :
+      page === 'wishlist.html' ? 'wish' :
+      (page === 'blog.html' || page === 'post.html') ? 'blog' :
+      page === 'faq.html' ? 'faq' :
+      (page === 'product.html' || page === 'category.html') ? 'products' : '';
+    var links = nav.querySelectorAll('a[data-bn]');
+    var active = null;
+    for (var i = 0; i < links.length; i++) {
+      if (key && links[i].getAttribute('data-bn') === key) { active = links[i]; links[i].classList.add('active'); }
+    }
+    if (!ind) return;
+    var target = active || links[0];
+    if (!target) return;
+    function x() { return target.offsetLeft + target.offsetWidth / 2 - ind.offsetWidth / 2; }
+    /* بدونِ معطلی: نشانگر همان لحظه روی تبِ فعلی می‌نشیند */
+    ind.style.transform = 'translateX(' + x() + 'px) scale(' + (active ? '1' : '0') + ')';
+    window.addEventListener('resize', function () {
+      ind.style.transform = 'translateX(' + x() + 'px) scale(' + (active ? '1' : '0') + ')';
+    });
+  }
+
+  /* ---------- PWA: ثبتِ سرویس‌ورکر (مشترک بینِ همهٔ صفحه‌ها) ---------- */
+  function registerSW() {
+    if (!('serviceWorker' in navigator)) return;
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') return;
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  }
+
   window.Nina = {
     ICONS: ICONS, icon: icon, paintIcons: paintIcons,
     ART: ART, art: art,
@@ -274,6 +309,7 @@
     getAccent: getAccent, setAccent: setAccent,
     initTheme: initTheme, bindThemeToggle: bindThemeToggle,
     fetchJSON: fetchJSON, bindReveal: bindReveal,
+    bindBottomNav: bindBottomNav, registerSW: registerSW,
     wishGet: wishGet, wishHas: wishHas, wishToggle: wishToggle
   };
 })();

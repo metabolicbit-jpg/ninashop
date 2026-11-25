@@ -306,11 +306,20 @@ with sync_playwright() as p:
     check('موبایل: در صفحهٔ علاقه‌مندی‌ها، «علاقه‌مندی‌ها» فعال است', 'active' in m.locator('.bottom-nav [data-bn="wish"]').get_attribute('class'))
     ind = m.evaluate("""() => { const el = document.querySelector('.bn-ind');
       const a = document.querySelector('.bottom-nav a.active');
-      return { t: el.style.transform, cx: a.offsetLeft + a.offsetWidth / 2 }; }""")
+      return { t: el.style.transform, cx: a.offsetLeft + a.offsetWidth / 2, w: el.offsetWidth }; }""")
     check('موبایل: نشانگرِ موجی روی تبِ فعال نشسته', 'scale(1)' in ind['t'], ind['t'])
     import re as _re
     mx = float(_re.search(r'translateX\((-?[\d.]+)px\)', ind['t']).group(1))
-    check('موبایل: نشانگر با تبِ فعال هم‌مرکز است', abs((mx + 39) - ind['cx']) < 2, f'{mx+39} vs {ind["cx"]}')
+    check('موبایل: نشانگر با تبِ فعال هم‌مرکز است', abs((mx + ind['w'] / 2) - ind['cx']) < 2, f'{mx + ind["w"]/2} vs {ind["cx"]}')
+    # ریشهٔ باگِ وبلاگ/پرسش‌ها: تبِ فعال در همهٔ صفحه‌ها
+    for p_, k_ in [('blog.html', 'blog'), ('faq.html', 'faq'), ('product.html?id=short-naz', None), ('post.html?id=moraghabate-labas-zirin', None)]:
+        m.goto(BASE + '/' + p_, wait_until='networkidle')
+        m.wait_for_timeout(400)
+        r_ = m.evaluate("""() => { const el = document.querySelector('.bn-ind');
+          const a = document.querySelector('.bottom-nav a.active');
+          return { t: el ? el.style.transform : 'NO', a: a ? a.dataset.bn : 'NONE' }; }""")
+        check(f'موبایل: ناوبری در {p_.split("?")[0]} کار می‌کند',
+              r_['a'] != 'NONE' and 'scale(1)' in r_['t'], str(r_))
     m.screenshot(path='/tmp/shot-home-mobile.png', full_page=True)
     # اندازهٔ کارت: دو ستونه در ۳۹۰؟ (کلاس‌بندی: <380 تک‌ستون)
     m2 = browser.new_page(viewport={'width': 390, 'height': 844})

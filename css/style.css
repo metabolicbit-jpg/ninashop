@@ -817,55 +817,58 @@ html[data-theme='night'] .msg.err { background: #3a2222; }
 /* لینکِ دسته‌ها در فوتر */
 #footCats { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
 
-/* ---------- ناوبریِ پایینِ موبایل (طرحِ شناور با برآمدگیِ موجی) ---------- */
+/* ---------- ناوبریِ پایینِ موبایل (طرحِ شناور با موج و دایرهٔ نشسته در گودی) ---------- */
 .bottom-nav { display: none; }
 @media (max-width: 767px) {
-  body { padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px)); }
+  body { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
   .bottom-nav {
     display: flex;
     position: fixed; z-index: 70;
     left: 14px; right: 14px;
     bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     height: 60px;
-    background: var(--card);
+    background: var(--surface);
     border-radius: 18px;
-    box-shadow: 0 12px 32px rgba(0,0,0,.14);
+    box-shadow: 0 12px 32px rgba(0,0,0,.16);
     padding: 0 4px;
+    -webkit-tap-highlight-color: transparent;
   }
   .bottom-nav a {
     flex: 1; position: relative; z-index: 2;
     display: flex; align-items: center; justify-content: center;
     color: var(--muted); text-decoration: none;
-    transition: color .25s ease, transform .35s cubic-bezier(.34,1.56,.64,1);
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    transition: color .25s ease, transform .3s cubic-bezier(.34,1.56,.64,1);
   }
-  .bottom-nav a i { width: 23px; height: 23px; transition: transform .45s cubic-bezier(.34,1.56,.64,1); }
+  .bottom-nav a i { width: 23px; height: 23px; transition: transform .4s cubic-bezier(.34,1.56,.64,1); }
   .bottom-nav a i svg { width: 23px; height: 23px; }
   .bottom-nav a:active { transform: scale(.86); }
   .bottom-nav a.active { color: var(--accent-ink); }
-  .bottom-nav a.active i { transform: translateY(-31px); }
+  .bottom-nav a.active i { transform: translateY(-32px); }
 
-  /* نشانگرِ متحرک: برآمدگیِ موجی + دایرهٔ رنگی */
+  /* نشانگر: موجِ هم‌جنسِ منو + دایرهٔ رنگی که در گودیِ هلالی می‌نشیند */
   .bn-ind {
     position: absolute; bottom: 100%; left: 0; z-index: 1;
-    width: 78px; height: 28px;
+    width: 96px; height: 32px;
     transform: translateX(0) scale(0);
     transform-origin: 50% 100%;
-    transition: transform .55s cubic-bezier(.26,1.4,.36,1);
+    transition: transform .45s cubic-bezier(.26,1.3,.36,1);
     pointer-events: none;
   }
-  .bn-ind::before {  /* گنبدِ موج */
-    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 28px;
-    background: var(--card);
-    border-radius: 39px 39px 0 0;
+  .bn-ind::before {  /* موجِ بالای منو */
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 32px;
+    background: var(--surface);
+    border-radius: 48px 48px 0 0;
   }
-  .bn-ind::after {   /* دایرهٔ رنگیِ تبِ فعال */
+  .bn-ind::after {   /* دایرهٔ تبِ فعال */
     content: ''; position: absolute; bottom: -26px; left: 50%;
-    width: 54px; height: 54px; border-radius: 50%;
+    width: 56px; height: 56px; border-radius: 50%;
     transform: translateX(-50%);
     background: var(--accent);
     box-shadow: 0 8px 20px -6px var(--accent);
   }
-  .bn-f { position: absolute; bottom: 0; width: 26px; height: 26px; }
-  .bn-fl { left: -25px; background: radial-gradient(circle at 0 100%, transparent 25px, var(--card) 25.5px); }
-  .bn-fr { right: -25px; background: radial-gradient(circle at 100% 100%, transparent 25px, var(--card) 25.5px); }
+  .bn-f { position: absolute; bottom: 0; width: 32px; height: 32px; }
+  .bn-fl { left: -31px; background: radial-gradient(circle at 0 100%, transparent 31px, var(--surface) 31.5px); }
+  .bn-fr { right: -31px; background: radial-gradient(circle at 100% 100%, transparent 31px, var(--surface) 31.5px); }
 }
