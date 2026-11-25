@@ -20,7 +20,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages project create roya-shop --production-branch=main
+          command: pages project create ninashop --production-branch=main
         continue-on-error: true
 
       - name: انتشار
@@ -28,4 +28,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy . --project-name=roya-shop --commit-dirty=true
+          command: pages deploy . --project-name=ninashop --commit-dirty=true
