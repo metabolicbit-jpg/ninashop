@@ -265,11 +265,10 @@
     return i === -1; /* true = اضافه شد */
   }
 
-  /* ---------- ناوبریِ پایینِ موبایل: نشانگرِ موجی روی تبِ فعلی (مشترک بینِ همهٔ صفحه‌ها) ---------- */
+  /* ---------- ناوبریِ پایینِ موبایل: نشانِ تبِ فعلی (مشترک بینِ همهٔ صفحه‌ها) ---------- */
   function bindBottomNav() {
     var nav = document.querySelector('.bottom-nav');
     if (!nav) return;
-    var ind = nav.querySelector('.bn-ind');
     var page = location.pathname.split('/').pop();
     var key =
       (page === '' || page === 'index.html') ? (location.hash === '#products' ? 'products' : 'home') :
@@ -277,20 +276,9 @@
       (page === 'blog.html' || page === 'post.html') ? 'blog' :
       page === 'faq.html' ? 'faq' :
       (page === 'product.html' || page === 'category.html') ? 'products' : '';
-    var links = nav.querySelectorAll('a[data-bn]');
-    var active = null;
-    for (var i = 0; i < links.length; i++) {
-      if (key && links[i].getAttribute('data-bn') === key) { active = links[i]; links[i].classList.add('active'); }
-    }
-    if (!ind) return;
-    var target = active || links[0];
-    if (!target) return;
-    function x() { return target.offsetLeft + target.offsetWidth / 2 - ind.offsetWidth / 2; }
-    /* بدونِ معطلی: نشانگر همان لحظه روی تبِ فعلی می‌نشیند */
-    ind.style.transform = 'translateX(' + x() + 'px) scale(' + (active ? '1' : '0') + ')';
-    window.addEventListener('resize', function () {
-      ind.style.transform = 'translateX(' + x() + 'px) scale(' + (active ? '1' : '0') + ')';
-    });
+    if (!key) return;
+    var a = nav.querySelector('a[data-bn="' + key + '"]');
+    if (a) a.classList.add('active');
   }
 
   /* ---------- PWA: ثبتِ سرویس‌ورکر (مشترک بینِ همهٔ صفحه‌ها) ---------- */
