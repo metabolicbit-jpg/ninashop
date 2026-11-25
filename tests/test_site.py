@@ -221,7 +221,7 @@ with sync_playwright() as p:
     check('محصول: لغوِ رنگ، پیام را تمیز می‌کند', 'رنگِ' not in msg2 and 'سایزِ M' in msg2, msg2)
     # og:image: بدونِ عکسِ محصول، تصویرِ عمومی
     og = pg2.evaluate("document.querySelector('meta[property=\"og:image\"]').content")
-    check('محصول: og:image عمومی وقتی عکس نیست', og.endswith('/assets/og.png'), og)
+    check('محصول: og:image عمومی وقتی عکس نیست', og.endswith('/assets/og.jpg'), og)
     # قلبِ بزرگ و نشانِ موجودی در صفحهٔ محصول
     check('محصول: قلبِ بزرگِ علاقه‌مندی', pg2.locator('.title-row .wish-btn.big').count() == 1)
     check('محصول: نشانِ موجودیِ محدود', pg2.locator('.stock-badge.big').count() == 1)
