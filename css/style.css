@@ -978,3 +978,147 @@ html[data-theme='night'] .log-item.err { background: #3a2222; }
 /* چک‌باکسِ عکسِ خالص در پنل */
 .bare-check { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: .9rem; cursor: pointer; }
 .bare-check input { width: 18px; height: 18px; accent-color: var(--accent, #e56a92); }
+
+/* ============================================================
+   ستونِ خرید و پرداخت (بخشِ ۹ سندِ UI) — سبد، پرداختِ کارت به کارت،
+   پیگیریِ سفارش و تبِ سفارش‌هایِ پنل. همهٔ رنگ‌ها از متغیرهایِ ۱.
+   ============================================================ */
+
+/* ---------- دکمهٔ سبد در سربرگ ---------- */
+.cart-btn { position: relative; }
+.cart-count {
+  position: absolute; top: -6px; inset-inline-end: -6px;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  background: var(--accent); color: var(--accent-ink);
+  border-radius: 9px; font-size: .68rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ---------- سبدِ خرید (checkout) ---------- */
+.cart-lines { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.cart-line {
+  display: flex; align-items: center; gap: 12px;
+  border: 1px solid var(--border); border-radius: var(--r-s);
+  padding: 10px 12px; background: var(--surface2);
+}
+.cl-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.cl-info b { font-size: .95rem; }
+.cl-meta { font-size: .78rem; color: var(--muted); }
+.cl-price { font-size: .85rem; color: var(--accent); font-weight: 700; }
+.cl-qty { display: flex; align-items: center; gap: 8px; }
+.cl-qty .qn { min-width: 22px; text-align: center; font-weight: 700; }
+.qbtn {
+  width: 30px; height: 30px; border-radius: 9px;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--text); font: inherit; font-weight: 700; cursor: pointer;
+}
+.qbtn:hover { border-color: var(--accent); color: var(--accent); }
+.cl-del {
+  border: 0; background: none; color: var(--muted); cursor: pointer;
+  width: 32px; height: 32px; border-radius: 9px; flex: none;
+}
+.cl-del:hover { color: #e8536f; background: var(--tint); }
+.sum-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 2px; font-size: .92rem; color: var(--muted);
+}
+.sum-row b { color: var(--text); }
+.btn-block { width: 100%; justify-content: center; }
+.empty-cart { text-align: center; padding: 34px 20px; }
+.empty-cart .btn { margin-top: 12px; }
+
+/* ---------- چیپِ وضعیتِ سفارش ---------- */
+.status-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: .74rem; font-weight: 700; padding: 4px 10px;
+  border-radius: 999px; border: 1px solid var(--border); background: var(--surface2);
+}
+.st-wait { color: #b0781f; background: color-mix(in srgb, #f2b544 16%, transparent); border-color: color-mix(in srgb, #f2b544 40%, transparent); }
+.st-ok  { color: #2e9e6b; background: color-mix(in srgb, #2e9e6b 12%, transparent); border-color: color-mix(in srgb, #2e9e6b 35%, transparent); }
+.st-warn { color: #c26a1f; background: color-mix(in srgb, #e88b3a 14%, transparent); border-color: color-mix(in srgb, #e88b3a 40%, transparent); }
+.st-bad { color: #d34868; background: color-mix(in srgb, #e8536f 12%, transparent); border-color: color-mix(in srgb, #e8536f 35%, transparent); }
+
+/* ---------- صفحهٔ پرداختِ کارت به کارت ---------- */
+.pay-code-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.pay-code {
+  font-size: 1.15rem; font-weight: 800; letter-spacing: .5px;
+  color: var(--accent); background: var(--tint);
+  border: 1px dashed var(--accent); border-radius: var(--r-s);
+  padding: 6px 14px;
+}
+.amount-box {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 14px 16px; margin-bottom: 12px;
+}
+.amount-label { font-size: .8rem; color: var(--muted); display: block; margin-bottom: 4px; }
+.amount-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.amount-row .amount { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
+.copy-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  border: 1px solid var(--accent); color: var(--accent);
+  background: var(--surface); border-radius: 999px;
+  font: inherit; font-size: .78rem; font-weight: 700;
+  padding: 5px 12px; cursor: pointer; margin-inline-start: auto;
+}
+.copy-btn:hover, .copy-btn.copied { background: var(--accent); color: var(--accent-ink); }
+.card-box {
+  border: 1px solid var(--border); border-radius: var(--r);
+  padding: 14px 16px; margin-bottom: 12px; background: var(--surface);
+}
+.card-box-head { font-weight: 700; display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
+.card-num-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.card-num { font-size: 1.2rem; font-weight: 800; letter-spacing: 1px; }
+.countdown {
+  display: flex; align-items: center; gap: 7px;
+  font-weight: 700; color: var(--accent); margin-bottom: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.countdown.over { color: #d34868; }
+.pay-steps { margin: 0 0 14px; padding-inline-start: 20px; color: var(--muted); font-size: .88rem; line-height: 2; }
+.warn-hint { color: #c26a1f; }
+.pay-done { text-align: center; padding: 30px 20px; }
+.done-mark {
+  width: 62px; height: 62px; margin: 0 auto 12px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, #2e9e6b 14%, transparent); color: #2e9e6b;
+}
+.done-mark i, .done-mark i svg { width: 30px; height: 30px; }
+.my-orders { display: flex; flex-direction: column; gap: 8px; }
+.my-order {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  border: 1px solid var(--border); border-radius: var(--r-s);
+  padding: 10px 12px; color: var(--text); text-decoration: none;
+}
+.my-order.active, .my-order:hover { border-color: var(--accent); background: var(--tint); }
+.my-order b { color: var(--accent); }
+.my-order span:nth-child(2) { color: var(--muted); font-size: .82rem; }
+.my-order .status-chip { margin-inline-start: auto; }
+
+/* ---------- تبِ سفارش‌هایِ پنل ---------- */
+.opv { border: 1px solid var(--accent); border-radius: var(--r-s); padding: 12px 14px; margin-top: 12px; background: var(--tint); }
+.opv-head { margin-bottom: 8px; }
+.opv-line { padding: 3px 0; font-size: .9rem; }
+.opv-pii { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); font-size: .88rem; line-height: 1.9; }
+.order-item {
+  border: 1px solid var(--border); border-radius: var(--r-s);
+  padding: 12px 14px; margin-bottom: 10px; background: var(--surface);
+}
+.order-item.needs-review { border-color: color-mix(in srgb, #f2b544 55%, transparent); }
+.oi-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.oi-head b { color: var(--accent); font-size: 1.02rem; }
+.oi-amount { font-weight: 700; }
+.oi-date { color: var(--muted); font-size: .8rem; margin-inline-start: auto; }
+.oi-items { font-size: .88rem; color: var(--text); margin-bottom: 6px; }
+.oi-pii { font-size: .84rem; color: var(--muted); line-height: 1.9; margin-bottom: 8px; }
+.oi-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.oi-actions select, .oi-actions input {
+  font: inherit; font-size: .85rem; padding: 7px 10px;
+  border: 1px solid var(--border); border-radius: var(--r-s);
+  background: var(--surface); color: var(--text);
+}
+.oi-actions input { flex: 1; min-width: 140px; }
+
+/* یادآوریِ انتخابِ سایز روی دکمهٔ افزودن به سبد */
+.size-chip.need-pick { border-color: #e8536f; color: #e8536f; animation: nina-shake .5s ease; }
+@keyframes nina-shake { 25% { transform: translateX(3px); } 50% { transform: translateX(-3px); } 75% { transform: translateX(2px); } }
+.btn.added { border-color: #2e9e6b; color: #2e9e6b; }

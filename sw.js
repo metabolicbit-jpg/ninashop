@@ -6,19 +6,23 @@
      پشتیبانِ وقتی است که شبکه دیر یا قطع باشد
    - فونت و عکس: اول حافظه (نسخه‌دار و تغییرناپذیر)، سریع مثل اپ
    ============================================================ */
-var CACHE = 'nina_v5';
+var CACHE = 'nina_v6';
 var CORE = [
   './',
   'index.html',
   'category.html',
   'product.html',
   'wishlist.html',
+  'checkout.html',
+  'payment.html',
   'blog.html',
   'post.html',
   'faq.html',
   'css/style.css',
   'js/icons.js',
   'js/app.js',
+  'js/cart.js',
+  'js/payments.js',
   'js/product.js',
   'js/blog.js',
   'js/faq.js',

@@ -6,18 +6,21 @@
 (function () {
   'use strict';
   var R = window.Nina;
+  var Pay = window.Nina && window.Nina.Pay;
 
   var K_TOKEN = 'nina_v1_gh_token', K_USER = 'nina_v1_gh_user', K_REPO = 'nina_v1_gh_repo';
   var K_DATA = 'nina_v1_admin_data';   /* دادهٔ ویرایش‌شدهٔ محلی */
   var K_DIRTY = 'nina_v1_admin_dirty'; /* فهرستِ فایل‌هایِ تغییر‌کردهٔ منتشرنشده */
+  var K_PII = 'nina_v1_orders_pii';    /* اطلاعاتِ خریدارِ هر سفارش — فقط در همین مرورگر، هرگز منتشر نمی‌شود */
 
-  /* دادهٔ محلی: {site:…, products:[…], testimonials:[…], posts:[…], faq:[…]} */
-  var data = { site: null, products: [], testimonials: [], posts: [], faq: [], categories: [] };
+  /* دادهٔ محلی: {site:…, products:[…], testimonials:[…], posts:[…], faq:[…], orders:[…]} */
+  var data = { site: null, products: [], testimonials: [], posts: [], faq: [], categories: [], orders: [] };
   var dirty = {};   /* مسیر → true */
   var pendingUploads = [];  /* [{path, base64}] عکس‌هایِ در انتظارِ انتشار */
   var editing = null, editingT = null, editingP = null, editingQ = null, editingC = null;
   var pendingImage = null;  /* {base64, name} عکسِ محصولِ در حالِ ویرایش */
   var imageRemoved = false;
+  var decodedOrder = null;  /* سفارشِ خوانده‌شده از کدِ مشتری، در انتظارِ ثبت */
 
   var FILES = {
     site: 'data/site.json',
@@ -26,7 +29,18 @@
     posts: 'data/posts.json',
     faq: 'data/faq.json',
     categories: 'data/categories.json',
+    orders: 'data/orders.json',
     sitemap: 'sitemap.xml'
+  };
+
+  var ORDER_STATUS = {
+    created:  'در انتظارِ پرداخت',
+    sent:     'پرداخت شد — در انتظارِ بررسی',
+    paid:     'تأیید شد',
+    shipped:  'ارسال شد',
+    mismatch: 'مغایرتِ مبلغ',
+    rejected: 'رد شد',
+    expired:  'منقضی شد'
   };
 
   /* ---------- sitemap خودکار: با هر تغییرِ محصول/مقاله/دامنه بازسازی می‌شود ---------- */
@@ -73,6 +87,7 @@
           if (!Array.isArray(data.posts)) data.posts = [];
           if (!Array.isArray(data.faq)) data.faq = [];
           if (!Array.isArray(data.categories)) data.categories = [];
+          if (!Array.isArray(data.orders)) data.orders = [];
           loadDirty();   /* یادآوریِ اینکه چه چیزهایی هنوز منتشر نشده */
           return true;
         }
@@ -562,6 +577,7 @@
     var c = s.channels || {};
     set('s-instagram', c.instagram); set('s-telegram', c.telegram);
     set('s-whatsapp', c.whatsapp); set('s-phone', c.phone);
+    fillPaymentsForm();
   }
   function saveSite() {
     data.site.name = get('s-name') || 'نینا شاپ';
@@ -584,6 +600,191 @@
     msg('pubMsg', 'کانال‌ها ذخیره شدند. برای اعمال در سایت، «انتشار» را بزن.', true);
   }
 
+  /* ---------- پرداختِ کارت به کارت (تنظیمات) ---------- */
+  function fillPaymentsForm() {
+    var c = (data.site.payments && data.site.payments.cardToCard) || {};
+    set('p-card', c.cardNumber); set('p-holder', c.cardHolder);
+    set('p-bank', c.bank); set('p-expire', c.expireHours);
+    set('p-ship', c.shippingFee); set('p-note', c.note);
+    set('p-enabled', c.enabled === false ? '0' : '1');
+  }
+  function savePayments() {
+    data.site.payments = data.site.payments || {};
+    data.site.payments.cardToCard = {
+      enabled: get('p-enabled') !== '0',
+      cardNumber: get('p-card').replace(/[\s٬-]/g, ''),
+      cardHolder: get('p-holder'),
+      bank: get('p-bank'),
+      expireHours: Math.max(1, Number(R.normDigits(get('p-expire'))) || 6),
+      shippingFee: Math.max(0, Number(R.normDigits(get('p-ship'))) || 0),
+      note: get('p-note')
+    };
+    saveLocal(); markDirty('site');
+    msg('pubMsg', 'تنظیماتِ پرداخت ذخیره شد. برای اعمال در سایت، «انتشار» را بزن.', true);
+  }
+
+  /* ---------- سفارش‌ها (کارت به کارت) ----------
+     حریمِ خصوصی: اطلاعاتِ خریدار (نام، تلفن، نشانی) هرگز در orders.json
+     عمومی نمی‌رود؛ فقط در همین مرورگر (K_PII) می‌ماند و از دلِ پیامِ
+     واتساپِ مشتری خوانده می‌شود. در ریپو فقط کد، اقلام، مبلغ و وضعیت. */
+  function piiLoad() {
+    try { return JSON.parse(localStorage.getItem(K_PII) || '{}'); } catch (e) { return {}; }
+  }
+  function piiSave(p) {
+    try { localStorage.setItem(K_PII, JSON.stringify(p)); } catch (e) {}
+  }
+
+  function statusFilePath(code) { return 'data/order-status/' + encodeURIComponent(code) + '.json'; }
+
+  function findOrder(code) {
+    return (data.orders || []).filter(function (o) { return o.code === code; })[0] || null;
+  }
+
+  /* خواندنِ کدِ سفارشِ مشتری و پیش‌نمایش */
+  function decodeOrder() {
+    var m = document.getElementById('o-decode-msg');
+    var box = document.getElementById('o-preview');
+    decodedOrder = null;
+    box.style.display = 'none';
+    function say(t, ok) { m.textContent = t; m.style.display = ''; m.style.color = ok ? 'var(--ok, #2e9e6b)' : '#e8536f'; }
+    try {
+      var o = Pay.decodePayload(get('o-payload'));
+      if (findOrder(o.code)) { say('این سفارش (' + R.fa(o.code) + ') قبلاً ثبت شده — در فهرستِ پایین است.', false); return; }
+      decodedOrder = o;
+      var lines = (o.items || []).map(function (it) {
+        return '<div class="opv-line"><b>' + R.esc(it.name) + '</b>' +
+          (it.size ? ' · سایزِ ' + R.esc(it.size) : '') + (it.color ? ' · ' + R.esc(it.color) : '') +
+          ' — ' + R.fa(it.qty) + ' عدد</div>';
+      }).join('');
+      var b = o.buyer || {};
+      box.innerHTML =
+        '<div class="opv">' +
+          '<div class="opv-head">سفارشِ <b>' + R.esc(o.code) + '</b> — مبلغِ انتظارِداشته: <b>' + R.faG(o.pricing && o.pricing.payAmount) + ' تومان</b></div>' +
+          lines +
+          '<div class="opv-pii"><b>خریدار:</b> ' + R.esc(b.name || '—') + ' · ' + R.esc(b.phone || '—') + '<br>' +
+          '<b>نشانی:</b> ' + R.esc((b.city || '') + '، ' + (b.address || '—')) +
+          (b.note ? '<br><b>یادداشت:</b> ' + R.esc(b.note) : '') + '</div>' +
+          '<p class="hint">اطلاعاتِ خریدار فقط همین‌جا می‌ماند؛ در ریپو منتشر نمی‌شود.</p>' +
+          '<button class="btn btn-primary btn-sm" id="registerOrder"><i data-ic="save"></i> ثبتِ سفارش</button>' +
+        '</div>';
+      box.style.display = '';
+      say('سفارش خوانده شد — بررسی کن و ثبت کن.', true);
+      R.paintIcons();
+      document.getElementById('registerOrder').addEventListener('click', registerDecoded);
+    } catch (e) {
+      say('خواندن نشد: ' + e.message, false);
+    }
+  }
+
+  function registerDecoded() {
+    if (!decodedOrder) return;
+    var o = decodedOrder;
+    var p = piiLoad();
+    p[o.code] = { buyer: o.buyer || {}, payload: Pay.encodePayload(o), registered: Date.now() };
+    piiSave(p);
+    /* نسخهٔ عمومی: بدونِ هیچ اطلاعاتِ خریدار */
+    data.orders.push({
+      code: o.code,
+      created: o.created,
+      expiresAt: o.expiresAt,
+      items: o.items,
+      pricing: o.pricing,
+      status: 'sent',
+      note: '',
+      stockDone: false,
+      updated: Date.now()
+    });
+    decodedOrder = null;
+    document.getElementById('o-preview').style.display = 'none';
+    set('o-payload', '');
+    document.getElementById('o-decode-msg').style.display = 'none';
+    saveLocal(); markDirty('orders');
+    renderOrders();
+    msg('pubMsg', 'سفارشِ ' + R.fa(o.code) + ' ثبت شد. برای رسیدنِ وضعیت به مشتری، «انتشار» را بزن.', true);
+  }
+
+  /* اعمالِ وضعیت/یادداشت: تأییدِ پرداخت موجودی را کم می‌کند و فایلِ وضعیت را می‌سازد */
+  function applyOrder(code) {
+    var o = findOrder(code);
+    if (!o) return;
+    var sel = document.getElementById('st-' + code);
+    var note = document.getElementById('nt-' + code);
+    var st = sel ? sel.value : o.status;
+    o.status = st;
+    o.note = note ? note.value.trim() : o.note;
+    o.updated = Date.now();
+
+    /* کسرِ موجودی: فقط یک‌بار، در گذرِ سفارش به «تأیید شد» یا «ارسال شد» */
+    if ((st === 'paid' || st === 'shipped') && !o.stockDone) {
+      var changed = false;
+      (o.items || []).forEach(function (it) {
+        var prod = (data.products || []).filter(function (x) { return x.id === it.id; })[0];
+        if (prod && prod.stock !== undefined && prod.stock !== '') {
+          prod.stock = Math.max(0, Number(prod.stock) - Number(it.qty));
+          changed = true;
+        }
+      });
+      o.stockDone = true;
+      if (changed) markDirty('products');
+    }
+
+    saveLocal(); markDirty('orders');
+    renderOrders();
+    msg('pubMsg', 'وضعیتِ ' + R.fa(code) + ' شد: «' + ORDER_STATUS[st] + '». برای رسیدنِ به مشتری، «انتشار» را بزن.', true);
+  }
+
+  function renderOrders() {
+    var box = document.getElementById('ordersList');
+    if (!box) return;
+    if (!(data.orders || []).length) {
+      box.innerHTML = '<p class="hint">هنوز سفارشی ثبت نشده. کدِ پیامِ مشتری را در کادرِ بالا بچسبان.</p>';
+      return;
+    }
+    var pii = piiLoad();
+    var opts = Object.keys(ORDER_STATUS).map(function (k) {
+      return '<option value="' + k + '">' + ORDER_STATUS[k] + '</option>';
+    }).join('');
+    box.innerHTML = data.orders.slice().reverse().map(function (o) {
+      var p = (pii[o.code] && pii[o.code].buyer) || {};
+      var lines = (o.items || []).map(function (it) {
+        return R.esc(it.name) + (it.size ? ' (' + R.esc(it.size) + ')' : '') + ' ×' + R.fa(it.qty);
+      }).join('، ');
+      return '<div class="order-item' + (o.status === 'sent' ? ' needs-review' : '') + '">' +
+        '<div class="oi-head"><b>' + R.esc(o.code) + '</b>' +
+          '<span class="oi-amount">' + R.faG(o.pricing && o.pricing.payAmount) + ' تومان</span>' +
+          '<span class="oi-date">' + R.fa(new Date(o.created).toLocaleDateString('fa-IR')) + '</span></div>' +
+        '<div class="oi-items">' + lines + '</div>' +
+        (p.name ? '<div class="oi-pii"><b>خریدار:</b> ' + R.esc(p.name) + ' · ' + R.esc(p.phone || '') +
+          '<br><b>نشانی:</b> ' + R.esc(((p.city || '') + '، ' + (p.address || '')).replace(/^، /, '')) + '</div>' : '') +
+        '<div class="oi-actions">' +
+          '<select id="st-' + R.esc(o.code) + '">' + opts + '</select>' +
+          '<input id="nt-' + R.esc(o.code) + '" placeholder="یادداشت (مثل کدِ رهگیریِ پست)">' +
+          '<button class="btn btn-primary btn-sm" data-apply="' + R.esc(o.code) + '">اعمال</button>' +
+        '</div>' +
+        (o.note ? '<p class="hint">یادداشتِ فعلی: ' + R.esc(o.note) + '</p>' : '') +
+      '</div>';
+    }).join('');
+    box.querySelectorAll('[data-apply]').forEach(function (b) {
+      b.addEventListener('click', function () { applyOrder(b.getAttribute('data-apply')); });
+    });
+    /* انتخابگرِ وضعیت رویِ وضعیتِ فعلی بنشیند */
+    data.orders.forEach(function (o) {
+      var sel = document.getElementById('st-' + o.code);
+      if (sel) sel.value = o.status;
+    });
+    R.paintIcons();
+  }
+
+  /* فایل‌هایِ وضعیتِ عمومی: با هر انتشارِ سفارش‌ها، هم‌گامِ orders.json می‌شوند */
+  function buildStatusFiles() {
+    return (data.orders || []).map(function (o) {
+      return {
+        path: statusFilePath(o.code),
+        text: JSON.stringify({ code: o.code, status: o.status, note: o.note || '', updated: o.updated || o.created }, null, 2) + '\n'
+      };
+    });
+  }
+
   /* ---------- پشتیبان ---------- */
   function exportJSON() {
     var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -601,6 +802,7 @@
         if (!d || !d.site || !d.products) throw new Error('ساختارِ فایل درست نیست');
         data = d;
         if (!Array.isArray(data.categories)) data.categories = [];
+        if (!Array.isArray(data.orders)) data.orders = [];
         saveLocal(); fillSiteForm(); renderProducts(); renderTestimonials(); renderPosts(); renderFaq(); renderCategories();
         /* دادهٔ درون‌ریزی‌شده جای دادهٔ فعلی را می‌گیرد؛ تا منتشر نشود، باید «کثیف» شمرده شود */
         Object.keys(FILES).forEach(function (k) { if (k !== 'sitemap') markDirty(k); });
@@ -834,11 +1036,20 @@
           })
           .catch(function (e) { errItems.push(u.path + ' ← ' + ghErrText(e)); });
       }
+      /* فایل‌هایِ وضعیتِ سفارش‌ها: هرگاه سفارش‌ها منتشر می‌شوند، هم‌گام می‌روند */
+      var statusFiles = dirty[FILES.orders] ? buildStatusFiles() : [];
 
       preflight().then(function () {
-        msg('pubMsg', 'در حالِ انتشار… (' + R.fa(paths.length + uploads.length) + ' فایل)', true);
+        msg('pubMsg', 'در حالِ انتشار… (' + R.fa(paths.length + uploads.length + statusFiles.length) + ' فایل)', true);
         return runSeq(paths, sendFile)
           .then(function () { return runSeq(uploads, sendUpload); })
+          .then(function () {
+            return runSeq(statusFiles, function (sf) {
+              return withRetry(function () { return putFile(sf.path, sf.text); })
+                .then(function () { okItems.push(sf.path); })
+                .catch(function (e) { errItems.push(sf.path + ' ← ' + ghErrText(e)); });
+            });
+          })
           .then(function () {
             btn.disabled = false;
             saveLocal(); saveDirty(); renderDirty();
@@ -923,6 +1134,7 @@
       });
       var bn = document.querySelectorAll('.bottom-nav a');
       bn.forEach(function (a) { a.classList.toggle('active', a.dataset.pane === name); });
+      if (name === 'orders') renderOrders();
       document.getElementById('pane-' + name).scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     document.querySelectorAll('.admin-tab').forEach(function (tab) {
@@ -1030,6 +1242,8 @@
 
     on('saveSite', 'click', saveSite);
     on('saveChannels', 'click', saveChannels);
+    on('savePayments', 'click', savePayments);
+    on('decodeOrder', 'click', decodeOrder);
     on('addPost', 'click', function () { openPEditor(null); });
     on('savePost', 'click', savePost);
     on('cancelP', 'click', function () {
@@ -1141,7 +1355,8 @@
         R.fetchJSON('../data/testimonials.json').catch(function () { return null; }),
         R.fetchJSON('../data/posts.json').catch(function () { return null; }),
         R.fetchJSON('../data/faq.json').catch(function () { return null; }),
-        R.fetchJSON('../data/categories.json').catch(function () { return null; })
+        R.fetchJSON('../data/categories.json').catch(function () { return null; }),
+        R.fetchJSON('../data/orders.json').catch(function () { return null; })
       ]).then(function (res) {
         data.site = res[0] || { name: 'نینا شاپ', tagline: '', about: '', domain: '', channels: {} };
         data.products = res[1] || [];
@@ -1149,11 +1364,12 @@
         data.posts = res[3] || [];
         data.faq = res[4] || [];
         data.categories = res[5] || [];
+        data.orders = res[6] || [];
         saveLocal();
-        fillSiteForm(); renderProducts(); renderTestimonials(); renderPosts(); renderFaq(); renderCategories();
+        fillSiteForm(); renderProducts(); renderTestimonials(); renderPosts(); renderFaq(); renderCategories(); renderOrders();
       });
     } else {
-      fillSiteForm(); renderProducts(); renderTestimonials(); renderPosts(); renderFaq(); renderCategories();
+      fillSiteForm(); renderProducts(); renderTestimonials(); renderPosts(); renderFaq(); renderCategories(); renderOrders();
     }
     renderDirty();
     renderLog();

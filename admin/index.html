@@ -46,6 +46,7 @@
         <button class="admin-tab" data-pane="posts">وبلاگ</button>
         <button class="admin-tab" data-pane="faq">پرسش‌ها</button>
         <button class="admin-tab" data-pane="categories">دسته‌ها</button>
+        <button class="admin-tab" data-pane="orders">سفارش‌ها</button>
         <button class="admin-tab" data-pane="publish">انتشار</button>
       </div>
 
@@ -153,6 +154,42 @@
           <div class="field"><label>واتساپ (با کدِ کشور)</label><input id="s-whatsapp" dir="ltr" placeholder="https://wa.me/98912…"></div>
           <div class="field"><label>تلفنِ نمایشی</label><input id="s-phone" placeholder="۰۹۱۲ ۰۰۰ ۰۰۰۰"></div>
           <button class="btn btn-primary btn-sm" id="saveChannels"><i data-ic="save"></i> ذخیره</button>
+        </div>
+        <div class="panel-card">
+          <h3><i data-ic="credit-card"></i> پرداختِ کارت به کارت</h3>
+          <p class="hint">این اطلاعات در صفحهٔ پرداختِ سفارش به مشتری نشان داده می‌شود. تا وقتی «فعال» خاموش است، صفحهٔ پرداخت غیرفعال می‌ماند.</p>
+          <div class="field-row">
+            <div class="field"><label>شمارهٔ کارت</label><input id="p-card" dir="ltr" inputmode="numeric" placeholder="۶۰۳7 9911 1234 5678"></div>
+            <div class="field"><label>به نامِ</label><input id="p-holder" placeholder="نام و نامِ خانوادگی"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>بانک</label><input id="p-bank" placeholder="مثلاً بانکِ ملت"></div>
+            <div class="field"><label>مهلتِ پرداخت (ساعت)</label><input id="p-expire" type="number" min="1" max="72" placeholder="6"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>هزینهٔ ارسال (تومان — ۰ یعنی رایگان)</label><input id="p-ship" type="number" min="0" placeholder="0"></div>
+            <div class="field"><label>فعال؟</label>
+              <select id="p-enabled"><option value="1">بله — فعال است</option><option value="0">خیر — فعلاً خاموش</option></select>
+            </div>
+          </div>
+          <div class="field"><label>یادداشتِ نمایشی در صفحهٔ پرداخت (اختیاری)</label><input id="p-note" placeholder="مثلاً: ساعتِ پاسخگویی…"></div>
+          <button class="btn btn-primary btn-sm" id="savePayments"><i data-ic="save"></i> ذخیره</button>
+        </div>
+      </section>
+
+      <!-- سفارش‌ها -->
+      <section class="admin-pane" id="pane-orders">
+        <div class="panel-card">
+          <h3><i data-ic="box"></i> ثبتِ سفارشِ مشتری</h3>
+          <p class="hint">مشتری بعد از پرداخت، پیامِ آماده‌ای در واتساپ می‌فرستد که «کدِ سفارش» دارد. کلِ آن پیام را این‌جا بچسبان؛ پنل سفارش را می‌خواند.</p>
+          <div class="field"><textarea id="o-payload" rows="4" dir="ltr" placeholder="NINA1.… (یا کلِ متنِ پیامِ مشتری)"></textarea></div>
+          <button class="btn btn-primary btn-sm" id="decodeOrder"><i data-ic="eye"></i> خواندنِ سفارش</button>
+          <p class="hint" id="o-decode-msg" style="display:none"></p>
+          <div id="o-preview" style="display:none"></div>
+        </div>
+        <div class="panel-card">
+          <h3><i data-ic="bag"></i> سفارش‌ها</h3>
+          <div id="ordersList"><p class="hint">هنوز سفارشی ثبت نشده.</p></div>
         </div>
       </section>
 
@@ -289,9 +326,11 @@
     <a data-pane="posts"><i data-ic="message"></i><span>وبلاگ</span></a>
     <a data-pane="faq"><i data-ic="info"></i><span>پرسش</span></a>
     <a data-pane="categories"><i data-ic="gem"></i><span>دسته</span></a>
+    <a data-pane="orders"><i data-ic="box"></i><span>سفارش</span></a>
     <a data-pane="publish"><i data-ic="upload"></i><span>انتشار</span></a>
   </nav>
   <script src="../js/icons.js" defer></script>
+  <script src="../js/payments.js" defer></script>
   <script src="admin.js" defer></script>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>

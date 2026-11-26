@@ -10,5 +10,16 @@
     "phone": "۰۹۱۳۲۵۲۵۳۶۹"
   },
   "shipping": "ارسالِ سریع به سراسر ایران، بسته‌بندیِ محرمانه و کاملاً بسته",
-  "guarantee": "ضمانتِ بازگشتِ ۷ روزه، بدونِ هیچ سؤالی"
+  "guarantee": "ضمانتِ بازگشتِ ۷ روزه، بدونِ هیچ سؤالی",
+  "payments": {
+    "cardToCard": {
+      "enabled": true,
+      "cardNumber": "",
+      "cardHolder": "",
+      "bank": "",
+      "expireHours": 6,
+      "shippingFee": 0,
+      "note": ""
+    }
+  }
 }

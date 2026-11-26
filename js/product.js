@@ -104,7 +104,8 @@
           '<span class="order-note">' + R.icon('bell' in R.ICONS ? 'bell' : 'sparkles') + ' این محصول به‌زودی می‌رسد؛ برایِ باخبر شدن، در اینستاگرام یا واتساپ دنبالمان کن.</span>' +
         '</div>'
       : '<div class="order-box">' +
-          '<a class="btn btn-primary" id="orderWa" href="' + orderLink(p, site) + '" target="_blank" rel="noopener">' + R.icon('whatsapp') + ' سفارشِ سریع در واتساپ</a>' +
+          '<button type="button" class="btn btn-primary" id="addCart">' + R.icon('bag') + ' افزودن به سبدِ خرید</button>' +
+          '<a class="btn btn-ghost" id="orderWa" href="' + orderLink(p, site) + '" target="_blank" rel="noopener">' + R.icon('whatsapp') + ' سفارشِ سریع در واتساپ</a>' +
           '<a class="btn btn-ghost" data-channel="instagram" href="' + ((site.channels && site.channels.instagram) || '#') + '" target="_blank" rel="noopener">' + R.icon('instagram') + ' پیام در اینستاگرام</a>' +
           '<span class="order-note">' + R.icon('shield') + ' بسته‌بندیِ محرمانه — ' + R.esc(site.shipping || 'ارسال به سراسر ایران') + '</span>' +
         '</div>';
@@ -153,6 +154,27 @@
       });
     });
     updateOrder();
+
+    /* افزودن به سبد: با سایز و رنگِ انتخابی؛ اگر سایز لازم است و انتخاب نشده، یادآوری می‌شود */
+    var addBtn = document.getElementById('addCart');
+    if (addBtn) {
+      addBtn.addEventListener('click', function () {
+        if (p.sizes && p.sizes.length && !sel.size) {
+          var chips = page.querySelectorAll('.size-chip');
+          if (chips[0]) { chips[0].classList.add('need-pick'); setTimeout(function () { chips.forEach(function (c) { c.classList.remove('need-pick'); }); }, 1400); }
+          addBtn.innerHTML = R.icon('info') + ' اول سایز را انتخاب کن';
+          setTimeout(function () { addBtn.innerHTML = R.icon('bag') + ' افزودن به سبدِ خرید'; R.paintIcons(); }, 1800);
+          return;
+        }
+        R.Cart.add(p.id, 1, sel.size, sel.color);
+        addBtn.innerHTML = R.icon('check') + ' به سبد رفت ✓';
+        addBtn.classList.add('added');
+        setTimeout(function () {
+          addBtn.innerHTML = R.icon('bag') + ' افزودن به سبدِ خرید';
+          addBtn.classList.remove('added'); R.paintIcons();
+        }, 1800);
+      });
+    }
 
     /* محصولاتِ مرتبط (همان دسته، بعد بقیه) */
     var rel = all.filter(function (x) {
