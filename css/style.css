@@ -841,7 +841,7 @@ html[data-theme='night'] .msg.err { background: #3a2222; }
     border-radius: 16px;
     -webkit-tap-highlight-color: transparent;
     outline: none;
-    transition: background .25s ease, color .25s ease, transform .2s ease;
+    transition: background .12s ease, color .12s ease, transform .1s ease;
   }
   .bottom-nav a i { width: 21px; height: 21px; }
   .bottom-nav a i svg { width: 21px; height: 21px; }

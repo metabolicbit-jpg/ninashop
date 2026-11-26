@@ -279,6 +279,15 @@
     if (!key) return;
     var a = nav.querySelector('a[data-bn="' + key + '"]');
     if (a) a.classList.add('active');
+
+    /* بازخوردِ آنیِ لمس: کاورِ تب، همان لحظهٔ لمس روشن می‌شود، پیش از بارگیریِ صفحهٔ بعد */
+    nav.addEventListener('pointerdown', function (e) {
+      var t = e.target.closest('a');
+      if (!t) return;
+      var cur = nav.querySelector('a.active');
+      if (cur) cur.classList.remove('active');
+      t.classList.add('active');
+    });
   }
 
   /* ---------- PWA: ثبتِ سرویس‌ورکر (مشترک بینِ همهٔ صفحه‌ها) ---------- */

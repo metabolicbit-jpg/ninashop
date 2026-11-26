@@ -1,10 +1,10 @@
 /* ============================================================
    نینا شاپ — سرویس‌ورکر: نصب‌پذیریِ PWA و کارکردِ آفلاین
-   استراتژی:
-   - صفحه‌ها و داده‌هایِ JSON: اول شبکه، اگر نشد حافظه (تازه بودنِ محتوا)
-   - فایل‌هایِ ثابت (css/js/فونت/آیکون): اول حافظه، سریع مثل اپ
+   استراتژی (سریع‌ترین حالت):
+   - همهٔ درخواست‌ها: اول حافظه (پاسخِ آنی)، به‌روزرسانی در پس‌زمینه
+     (stale-while-revalidate) — بارگیریِ دوبارهٔ صفحه‌ها آنی است
    ============================================================ */
-var CACHE = 'nina_v1';
+var CACHE = 'nina_v2';
 var CORE = [
   './',
   'index.html',
@@ -58,34 +58,17 @@ self.addEventListener('fetch', function (e) {
   var url = new URL(req.url);
   if (url.origin !== location.origin) return;   /* واتساپ و اینستاگرام دستِ خودِ مرورگر */
 
-  var isNav = req.mode === 'navigate';
-  var isData = /\.json$/.test(url.pathname);
-
-  if (isNav || isData) {
-    /* اول شبکه؛ در نبودِ اینترنت، آخرین نسخهٔ ذخیره‌شده */
-    e.respondWith(
-      fetch(req).then(function (res) {
-        var copy = res.clone();
-        caches.open(CACHE).then(function (c) { c.put(req, copy); });
-        return res;
-      }).catch(function () {
-        return caches.match(req).then(function (hit) {
-          return hit || (isNav ? caches.match('./') : Response.error());
-        });
-      })
-    );
-    return;
-  }
-
-  /* فایلِ ثابت: اول حافظه */
+  /* stale-while-revalidate: پاسخِ ذخیره‌شده همان لحظه، نسخهٔ تازه در پس‌زمینه */
   e.respondWith(
     caches.match(req).then(function (hit) {
-      if (hit) return hit;
-      return fetch(req).then(function (res) {
-        var copy = res.clone();
-        caches.open(CACHE).then(function (c) { c.put(req, copy); });
+      var net = fetch(req).then(function (res) {
+        if (res && res.ok) {
+          var copy = res.clone();
+          caches.open(CACHE).then(function (c) { c.put(req, copy); });
+        }
         return res;
-      });
+      }).catch(function () { return hit || Response.error(); });
+      return hit || net;
     })
   );
 });
