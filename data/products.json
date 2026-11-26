@@ -320,5 +320,27 @@
     "image": "",
     "status": "active",
     "featured": 0
+  },
+  {
+    "id": "p1795674462636",
+    "cover": [
+      "#f8c8d8",
+      "#fde8ef"
+    ],
+    "icon": "heart",
+    "status": "active",
+    "featured": 1,
+    "oldPrice": 0,
+    "colors": [],
+    "image": "assets/products/p1795674462636.jpg",
+    "name": "شهدالعسل",
+    "category": "لوازم آرایشی",
+    "badge": "جدید",
+    "price": 225000,
+    "desc": "این تست است",
+    "fabric": "",
+    "art": "",
+    "sizes": [],
+    "stock": 5
   }
 ]
