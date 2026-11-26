@@ -249,9 +249,10 @@
     }
   });
 
-  /* ---------- بخشِ ویژهٔ صفحهٔ اصلی: اسلایدرِ کارتیِ محصولاتِ ویژه ----------
-     هر محصولِ «ویژه» یک کارت با دکمهٔ «دیدن» دارد که به صفحهٔ اختصاصی‌اش می‌رود.
-     اسلایدر هم خودکار می‌چرخد، هم با کشیدنِ دست جابجا می‌شود؛ نقطه‌ها هم قابلِ کلیک‌اند. */
+  /* ---------- بخشِ ویژهٔ صفحهٔ اصلی: استکِ کارت‌ها (Card Stack Carousel) ----------
+     هر اسلاید دقیقاً همان کارتِ معمولِ محصول است (هم‌اندازه، هم‌ظاهر، با قلب و
+     سفارش و قیمت). کارتِ بعدی و بعدی پشتِ کارتِ جلو دیده می‌شوند؛ چرخشِ خودکار
+     هر ۵ ثانیه، و با کشیدنِ دست کارتِ جلو کنار می‌رود و کارتِ بعدی می‌آید. */
   function renderFeaturedSlider() {
     var el = document.getElementById('heroCard');
     if (!el) return;
@@ -259,65 +260,90 @@
     if (!feat.length) feat = products.filter(function (p) { return p.status !== 'hidden'; }).slice(0, 3);
     if (!feat.length) { el.style.display = 'none'; return; }
     el.removeAttribute('aria-hidden');
-    el.style.animation = 'none';   /* اسلایدر نباید شناور باشد؛ نقطه‌ها زیرِ دست جابجا نشوند */
+    el.style.animation = 'none';   /* استک نباید شناور باشد؛ کارت زیرِ دست نلرزد */
+    el.classList.add('has-stack'); /* قابِ بیرونی شفاف می‌شود تا کارت‌ها رویِ زمینهٔ صورتی بنشینند */
     el.innerHTML =
-      '<div class="fslider" id="fslider">' +
-        '<div class="ftrack" id="ftrack">' +
-          feat.map(function (p) {
-            return '<div class="fslide"><div class="fcard">' +
-              '<a href="product.html?id=' + encodeURIComponent(p.id) + '" aria-label="' + R.esc(p.name) + '">' +
-                coverInner(p) +
-              '</a>' +
-              '<div class="frow"><span class="fname">' + R.esc(p.name) + '</span>' +
-                '<span class="fprice">' + R.faPrice(p.price) + ' <small>تومان</small></span></div>' +
-              '<a class="fview" href="product.html?id=' + encodeURIComponent(p.id) + '">' +
-                R.icon('eye') + ' دیدنِ محصول</a>' +
-            '</div></div>';
-          }).join('') +
-        '</div>' +
-        '<div class="fdots">' + feat.map(function (_, i) {
-          return '<button type="button" data-dot="' + i + '" aria-label="اسلایدِ ' + R.fa(i + 1) + '"></button>';
-        }).join('') + '</div>' +
+      '<div class="fstack" id="fstack">' +
+        feat.map(function (p) {
+          /* همان کارتِ معمولِ محصول، فقط بدونِ انیمیشنِ ظهورِ اسکرولی */
+          return '<div class="fstack-item">' + productCard(p).replace('card reveal', 'card') + '</div>';
+        }).join('') +
       '</div>';
 
-    var track = el.querySelector('#ftrack');
-    var zone = el.querySelector('#fslider');
-    var dots = Array.prototype.slice.call(el.querySelectorAll('.fdots button'));
-    var fi = 0, ftimer = null;
+    var stack = el.querySelector('#fstack');
+    var items = Array.prototype.slice.call(el.querySelectorAll('.fstack-item'));
+    var n = items.length, fi = 0, ftimer = null, suppressClick = false;
 
     function paint() {
-      track.style.transform = 'translateX(' + (fi * 100) + '%)';
-      dots.forEach(function (d, i) { d.classList.toggle('active', i === fi); });
+      items.forEach(function (it, idx) {
+        var depth = (idx - fi + n) % n;          /* ۰ = کارتِ جلو */
+        it.style.zIndex = String(n - depth);
+        if (depth === 0) { it.style.transform = ''; it.style.opacity = '1'; it.style.pointerEvents = ''; return; }
+        if (depth > 2) { it.style.opacity = '0'; it.style.transform = 'translateY(26px) scale(.88)'; it.style.pointerEvents = 'none'; return; }
+        it.style.opacity = depth === 1 ? '1' : '.55';
+        it.style.transform = 'translateY(' + (depth * 14) + 'px) scale(' + (1 - depth * 0.045) + ')';
+      });
     }
     function stopAuto() { if (ftimer) { clearInterval(ftimer); ftimer = null; } }
-    function startAuto() { stopAuto(); ftimer = setInterval(function () { fgo(fi + 1); }, 5000); }
-    function fgo(i) { fi = (i + feat.length) % feat.length; paint(); }
+    function startAuto() { stopAuto(); if (n > 1) ftimer = setInterval(function () { fly(-1); }, 5000); }
 
-    dots.forEach(function (d) {
-      d.addEventListener('click', function () { fgo(Number(d.dataset.dot)); startAuto(); });
-    });
-    /* کشیدنِ با دست: در راست‌به‌چپ، اسلایدِ بعدی سمتِ چپ است */
+    function fly(dir) {
+      var front = items[fi];
+      front.style.transition = 'transform .4s ease, opacity .4s ease';
+      front.style.transform = 'translateX(' + (dir < 0 ? '-130%' : '130%') + ') rotate(' + (dir < 0 ? '-9' : '9') + 'deg)';
+      front.style.opacity = '0';
+      setTimeout(function () {
+        front.style.transition = 'none';
+        front.style.transform = 'translateY(26px) scale(.88)';
+        fi = (fi + 1) % n;
+        paint();
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () { front.style.transition = ''; });
+        });
+      }, 380);
+    }
+
+    /* کشیدنِ کارتِ جلو با دست؛ در راست‌به‌چپ، کارتِ بعدی پشتِ کارت است */
     var sx = null, dx = 0;
-    zone.addEventListener('touchstart', function (e) { sx = e.touches[0].clientX; dx = 0; stopAuto(); }, { passive: true });
-    zone.addEventListener('touchmove', function (e) {
+    stack.addEventListener('touchstart', function (e) {
+      sx = e.touches[0].clientX; dx = 0; stopAuto();
+    }, { passive: true });
+    stack.addEventListener('touchmove', function (e) {
       if (sx === null) return;
       dx = e.touches[0].clientX - sx;
-      track.style.transition = 'none';
-      track.style.transform = 'translateX(' + (fi * 100 + (-dx / zone.offsetWidth * 100)) + '%)';
+      var front = items[fi];
+      front.style.transition = 'none';
+      front.style.transform = 'translateX(' + dx + 'px) rotate(' + (dx / 20) + 'deg)';
     }, { passive: true });
-    zone.addEventListener('touchend', function () {
-      track.style.transition = '';
-      if (Math.abs(dx) > 40) fgo(fi + (dx < 0 ? 1 : -1));
-      else paint();
+    stack.addEventListener('touchend', function () {
+      var front = items[fi];
+      front.style.transition = '';
+      suppressClick = Math.abs(dx) > 10;
+      if (Math.abs(dx) > 60) fly(dx < 0 ? -1 : 1);
+      else { front.style.transform = ''; paint(); }
       startAuto();
       sx = null;
     });
-    zone.addEventListener('mouseenter', stopAuto);
-    zone.addEventListener('mouseleave', startAuto);
+    /* بعد از کشیدن، کلیکِ همان لمس نباید لینکِ کارت را باز کند */
+    stack.addEventListener('click', function (e) {
+      if (suppressClick) { e.preventDefault(); e.stopPropagation(); suppressClick = false; }
+    }, true);
+    stack.addEventListener('mouseenter', stopAuto);
+    stack.addEventListener('mouseleave', startAuto);
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) stopAuto(); else startAuto();
     });
 
+    /* ارتفاعِ استک: همهٔ کارت‌ها هم‌قد می‌شوند تا لبهٔ کارت‌هایِ پشتی همیشه پیدا باشد */
+    requestAnimationFrame(function () {
+      var h = Math.max.apply(null, items.map(function (i) { return i.offsetHeight; }));
+      items.forEach(function (it) {
+        var c = it.querySelector('.card');
+        if (c && h) { c.style.height = h + 'px'; }
+      });
+      if (h) stack.style.minHeight = (h + 30) + 'px';
+      paint();
+    });
     paint();
     startAuto();
   }
