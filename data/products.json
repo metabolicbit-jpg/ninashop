@@ -322,7 +322,7 @@
     "featured": 0
   },
   {
-    "id": "p1795674462636",
+    "id": "p1795693860306",
     "cover": [
       "#f8c8d8",
       "#fde8ef"
@@ -332,61 +332,17 @@
     "featured": 1,
     "oldPrice": 0,
     "colors": [],
-    "image": "assets/products/p1795674462636.jpg",
-    "name": "شهدالعسل۴",
+    "image": "assets/products/p1795693860306.jpg",
+    "name": "کرم صورت بیورا",
     "category": "لوازم آرایشی",
     "badge": "جدید",
-    "price": 226000,
-    "desc": "این تست است",
+    "price": 225000,
+    "desc": "کرو زیبا کننده پوست و صورت",
     "fabric": "",
     "art": "",
     "sizes": [],
-    "stock": 5
-  },
-  {
-    "id": "p1795688491259",
-    "cover": [
-      "#ff00ff",
-      "#fde8ef"
-    ],
-    "icon": "heart",
-    "status": "active",
-    "featured": 1,
-    "oldPrice": 0,
-    "colors": [],
-    "image": "assets/products/p1795688491259.jpg",
-    "name": "جوراب فانتزی",
-    "category": "جوراب",
-    "badge": "پرفروش‌ترین",
-    "price": 99000,
-    "desc": "جوراب نانو فرشته",
-    "fabric": "",
-    "art": "",
-    "sizes": [],
-    "stock": 4,
-    "imgVer": 1795688564157
-  },
-  {
-    "id": "p1795692036622",
-    "cover": [
-      "#f8c8d8",
-      "#fde8ef"
-    ],
-    "icon": "heart",
-    "status": "active",
-    "featured": 0,
-    "oldPrice": 0,
-    "colors": [],
-    "image": "assets/products/p1795692036622.jpg",
-    "name": "لاک جیغ بنفش",
-    "category": "لوازم آرایشی",
-    "badge": "جدید",
-    "price": 175000,
-    "desc": "لاک جیغ بنفش فانتزی",
-    "fabric": "",
-    "art": "",
-    "sizes": [],
-    "stock": 6,
-    "imgVer": 1795692184799
+    "stock": 7,
+    "bare": 1,
+    "imgVer": 1795693986730
   }
 ]
