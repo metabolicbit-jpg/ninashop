@@ -66,12 +66,7 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://example.com/category.html?id=%D8%B3%D9%88%D8%AA%DB%8C%D9%86</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://example.com/category.html?id=%D8%B3%D8%AA%20%D8%AE%D9%88%D8%A7%D8%A8</loc>
+    <loc>https://example.com/category.html?id=%D8%B3%D9%88%D8%AA%DB%8C%D9%86%20%D9%88%20%D8%B3%D8%AA</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
