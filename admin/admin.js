@@ -9,6 +9,7 @@
 
   var K_TOKEN = 'nina_v1_gh_token', K_USER = 'nina_v1_gh_user', K_REPO = 'nina_v1_gh_repo';
   var K_DATA = 'nina_v1_admin_data';   /* دادهٔ ویرایش‌شدهٔ محلی */
+  var K_DIRTY = 'nina_v1_admin_dirty'; /* فهرستِ فایل‌هایِ تغییر‌کردهٔ منتشرنشده */
 
   /* دادهٔ محلی: {site:…, products:[…], testimonials:[…], posts:[…], faq:[…]} */
   var data = { site: null, products: [], testimonials: [], posts: [], faq: [], categories: [] };
@@ -72,15 +73,36 @@
           if (!Array.isArray(data.posts)) data.posts = [];
           if (!Array.isArray(data.faq)) data.faq = [];
           if (!Array.isArray(data.categories)) data.categories = [];
+          loadDirty();   /* یادآوریِ اینکه چه چیزهایی هنوز منتشر نشده */
           return true;
         }
       }
     } catch (e) {}
+    clearDirty();   /* دادهٔ محلیِ معتبری نیست؛ هر چه در سایت است، منتشر شده */
     return false;
   }
   function markDirty(key) {
     dirty[FILES[key]] = true;
+    saveDirty();
     renderDirty();
+  }
+  /* وضعیتِ «تغییرِ منتشرنشده» هم باید ذخیره شود؛ وگرنه با یک رفرشِ ساده،
+     پنل دادهٔ ویرایش‌شده را دارد ولی یادش می‌رود که هنوز منتشر نشده —
+     و «انتشار» می‌گوید «تغییری نیست» در حالی که محصول به سایت نرفته است. */
+  function saveDirty() {
+    try { localStorage.setItem(K_DIRTY, JSON.stringify(Object.keys(dirty))); } catch (e) {}
+  }
+  function loadDirty() {
+    try {
+      var valid = Object.keys(FILES).map(function (k) { return FILES[k]; });
+      (JSON.parse(localStorage.getItem(K_DIRTY) || '[]') || []).forEach(function (p) {
+        if (valid.indexOf(p) > -1) dirty[p] = true;
+      });
+    } catch (e) {}
+  }
+  function clearDirty() {
+    dirty = {};
+    try { localStorage.removeItem(K_DIRTY); } catch (e) {}
   }
   function renderDirty() {
     var el = document.getElementById('dirtyList');
@@ -561,7 +583,9 @@
         if (!d || !d.site || !d.products) throw new Error('ساختارِ فایل درست نیست');
         data = d;
         if (!Array.isArray(data.categories)) data.categories = [];
-        saveLocal(); fillSiteForm(); renderProducts(); renderTestimonials(); renderPosts(); renderFaq(); renderCategories(); renderDirty();
+        saveLocal(); fillSiteForm(); renderProducts(); renderTestimonials(); renderPosts(); renderFaq(); renderCategories();
+        /* دادهٔ درون‌ریزی‌شده جای دادهٔ فعلی را می‌گیرد؛ تا منتشر نشود، باید «کثیف» شمرده شود */
+        Object.keys(FILES).forEach(function (k) { if (k !== 'sitemap') markDirty(k); });
         msg('backupMsg', 'درون‌ریزی شد. برای اعمال در سایت، منتشر کن.', true);
       } catch (e) {
         msg('backupMsg', 'خطا: ' + e.message, false);
@@ -777,7 +801,7 @@
         .then(function () { return runSeq(uploads, sendUpload); })
         .then(function () {
           btn.disabled = false;
-          saveLocal(); renderDirty();
+          saveLocal(); saveDirty(); renderDirty();
           var okMsg = okItems.length
             ? R.fa(okItems.length) + ' فایل منتشر شد: ' + okItems.join('، ')
             : 'هیچ فایلی منتشر نشد.';
