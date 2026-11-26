@@ -342,5 +342,28 @@
     "art": "",
     "sizes": [],
     "stock": 5
+  },
+  {
+    "id": "p1795688491259",
+    "cover": [
+      "#ff00ff",
+      "#fde8ef"
+    ],
+    "icon": "heart",
+    "status": "active",
+    "featured": 1,
+    "oldPrice": 0,
+    "colors": [],
+    "image": "assets/products/p1795688491259.jpg",
+    "name": "جوراب فانتزی",
+    "category": "جوراب",
+    "badge": "پرفروش‌ترین",
+    "price": 99000,
+    "desc": "جوراب نانو فرشته",
+    "fabric": "",
+    "art": "",
+    "sizes": [],
+    "stock": 4,
+    "imgVer": 1795688564157
   }
 ]
