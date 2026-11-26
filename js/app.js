@@ -32,6 +32,7 @@
     if (p.art && R.ART && R.ART[p.art]) {
       return '<div class="cover with-art" style="' + coverStyle(p) + '">' + R.art(p.art) + '</div>';
     }
+    if (p.art === 'none') return '<div class="cover" style="' + coverStyle(p) + '"></div>';
     return '<div class="cover" style="' + coverStyle(p) + '">' + R.icon(p.icon || 'heart') + '</div>';
   }
 

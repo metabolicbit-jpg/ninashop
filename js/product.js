@@ -89,7 +89,7 @@
     var cover = p.image
       ? '<div class="cover with-img" style="' + coverStyle(p) + '"><img src="' + R.esc(R.imgSrc(p)) + '" alt="' + R.esc(p.name) + '"></div>'
       : '<div class="cover' + (hasArt ? ' with-art' : '') + '" style="' + coverStyle(p) + '">' +
-        (hasArt ? R.art(p.art) : R.icon(p.icon || 'heart')) + '</div>';
+        (hasArt ? R.art(p.art) : (p.art === 'none' ? '' : R.icon(p.icon || 'heart'))) + '</div>';
     var soon = p.status === 'soon';
     var stockN = Number(p.stock);
     var stockHTML = (!soon && stockN > 0 && stockN <= 5)
@@ -169,7 +169,7 @@
             (x.image
               ? '<div class="cover with-img" style="' + coverStyle(x) + '"><img src="' + R.esc(R.imgSrc(x)) + '" alt="' + R.esc(x.name) + '" loading="lazy"></div>'
               : '<div class="cover' + ((x.art && R.ART && R.ART[x.art]) ? ' with-art' : '') + '" style="' + coverStyle(x) + '">' +
-                ((x.art && R.ART && R.ART[x.art]) ? R.art(x.art) : R.icon(x.icon || 'heart')) + '</div>') +
+                ((x.art && R.ART && R.ART[x.art]) ? R.art(x.art) : (x.art === 'none' ? '' : R.icon(x.icon || 'heart'))) + '</div>') +
           '</a>' +
           '<div class="card-body">' +
             '<span class="card-cat">' + R.esc(x.category || '') + '</span>' +
