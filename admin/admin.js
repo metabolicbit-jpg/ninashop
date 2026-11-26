@@ -129,14 +129,30 @@
   function b64(text) {
     return btoa(unescape(encodeURIComponent(text)));
   }
-  /* sha فایل (404 = فایلِ نو) */
+  /* تشخیصِ اینکه پاسخ واقعاً از گیت‌هاب آمده یا از وسطِ راه (فیلترشکن/اپراتور).
+     گیت‌هاب همیشه سرصفحه‌هایی مثل x-ratelimit یا x-github-request-id می‌فرستد؛
+     اگر هیچ‌کدام نبود، 404 که می‌بینیم کارِ گیت‌هاب نیست و دستِ شبکه است. */
+  function fromGithub(r) {
+    return !!(r.headers.get('x-ratelimit-limit') || r.headers.get('x-github-request-id') ||
+              r.headers.get('x-github-mediatype') || r.headers.get('x-github-api-version'));
+  }
+  function ghFail(r) {
+    var e = new Error('GH' + r.status + '|' + (fromGithub(r) ? 'gh' : 'mid'));
+    e.ghStatus = r.status;
+    e.fromGithub = fromGithub(r);
+    return r.json().catch(function () { return {}; }).then(function (j) {
+      e.bodyMsg = j && j.message ? j.message : '';
+      throw e;
+    });
+  }
+  /* sha فایل (404ِ گیت‌هاب = فایلِ نو؛ 404ِ غیرِگیت‌هاب = خرابیِ مسیرِ شبکه) */
   function getSha(path) {
     return fetch(ghURL(path), {
       headers: { 'Authorization': 'Bearer ' + ghCfg().token, 'Accept': 'application/vnd.github+json' }
     }).then(function (r) {
-      if (r.status === 404) return null;
-      if (!r.ok) throw new Error('خطایِ گیت‌هاب: ' + r.status);
-      return r.json().then(function (j) { return j.sha; });
+      if (r.ok) return r.json().then(function (j) { return j.sha; });
+      if (r.status === 404 && fromGithub(r)) return null;
+      return ghFail(r);
     });
   }
   function putFile(path, text) {
@@ -157,9 +173,7 @@
           sha: sha || undefined
         })
       }).then(function (r) {
-        if (!r.ok) return r.json().then(function (j) {
-          throw new Error(j.message || ('HTTP ' + r.status));
-        });
+        if (!r.ok) return ghFail(r);
       });
     });
   }
@@ -701,11 +715,18 @@
   /* خطایِ گیت‌هاب به زبانِ آدمیزاد */
   function ghErrText(e) {
     var m = (e && e.message) || String(e);
-    if (/401/.test(m)) return 'توکنِ گیت‌هاب نامعتبر یا باطل شده (401). توکنِ تازه بساز و در تبِ ورود وارد کن.';
-    if (/403/.test(m) && /rate/i.test(m)) return 'محدودیتِ موقتِ گیت‌هاب (403 rate limit). چند دقیقه صبر کن و دوباره «انتشار» را بزن.';
-    if (/403/.test(m)) return 'دسترسی رد شد (403). توکن باید مجوزِ «Contents: Read and write» روی همین مخزن داشته باشد.';
-    if (/404|not found/i.test(m)) return 'پیدا نشد (404 Not Found). دو علتِ رایج: ۱) نامِ کاربری یا نامِ مخزن در تبِ ورود اشتباه است. ۲) توکنِ تازه به این مخزن دسترسی ندارد — در توکنِ Fine-grained باید در بخشِ Repository access مخزنِ ninashop انتخاب شده باشد و در Permissions گزینهٔ «Contents: Read and write» فعال باشد. بعد از اصلاحِ توکن، آن را در تبِ ورود دوباره وارد کن.';
-    if (/409|422/.test(m)) return 'تداخلِ نسخهٔ فایل (409/422). دوباره «انتشار» را بزن؛ معمولاً خودکار حل می‌شود.';
+    var st = e && e.ghStatus;
+    var extra = (e && e.bodyMsg) ? ' (پیامِ گیت‌هاب: ' + e.bodyMsg + ')' : '';
+    /* پاسخِ HTTP آمد ولی از گیت‌هاب نبود: وسطِ راه دستکاری/جواب شده */
+    if (st && e.fromGithub === false)
+      return 'پاسخِ ' + st + ' از گیت‌هاب نیامده — چیزی در مسیرِ شبکهٔ شما (فیلترشکن، اپراتور یا قطعیِ موقت) به‌جای گیت‌هاب جواب می‌دهد. یک‌بار با فیلترشکن و یک‌بار بدونِ آن امتحان کن، بعد دوباره «انتشار» را بزن. توکن و اطلاعاتِ ورود درست‌اند؛ مشکل از مسیرِ شبکه است.';
+    if (st === 401 || /401/.test(m)) return 'توکنِ گیت‌هاب نامعتبر یا باطل شده (401). توکنِ تازه بساز و در تبِ ورود وارد کن.' + extra;
+    if (st === 403 || /403/.test(m)) {
+      if (/rate/i.test(m)) return 'محدودیتِ موقتِ گیت‌هاب (403 rate limit). چند دقیقه صبر کن و دوباره «انتشار» را بزن.';
+      return 'دسترسی رد شد (403). توکن باید مجوزِ «Contents: Read and write» روی همین مخزن داشته باشد.' + extra;
+    }
+    if (st === 404 || /404|not found/i.test(m)) return 'گیت‌هاب گفت پیدا نشد (404). دو علتِ رایج: ۱) نامِ کاربری یا نامِ مخزن در تبِ ورود اشتباه است. ۲) توکنِ Fine-grained به این مخزن دسترسی ندارد — در بخشِ Repository access باید مخزنِ ninashop انتخاب شده باشد و در Permissions گزینهٔ «Contents: Read and write» فعال باشد. بعد از اصلاح، توکن را در تبِ ورود دوباره وارد کن.' + extra;
+    if (st === 409 || st === 422 || /409|422/.test(m)) return 'تداخلِ نسخهٔ فایل (409/422). دوباره «انتشار» را بزن؛ معمولاً خودکار حل می‌شود.' + extra;
     if (/fetch|network|Network/i.test(m)) return 'شبکه قطع بود یا گیت‌هاب پاسخ نداد. اینترنت را چک کن و دوباره «انتشار» را بزن.';
     return m;
   }
@@ -763,6 +784,19 @@
     }).join('') || '<p class="hint">هنوز ارسالی ثبت نشده.</p>';
   }
 
+  /* پیش‌پرواز: قبل از فرستادنِ فایل‌ها، یک درخواستِ سبک به خودِ مخزن.
+     اگر اتصال/دسترسی مشکل داشت، همین‌جا با یک گزارشِ روشن می‌ایستد
+     و پنج فایل، سه‌بارِ تکراری، خطایِ گیج‌کننده نمی‌گیرند. */
+  function preflight() {
+    var c = ghCfg();
+    return fetch('https://api.github.com/repos/' + c.user + '/' + c.repo, {
+      headers: { 'Authorization': 'Bearer ' + c.token, 'Accept': 'application/vnd.github+json' }
+    }).then(function (r) {
+      if (r.ok) return null;
+      return ghFail(r);
+    });
+  }
+
   function publish() {
     /* sitemap خودکار: هرگاه محصول، مقاله یا دامنه عوض شد، با انتشار تازه می‌شود */
     if (dirty[FILES.products] || dirty[FILES.posts] || dirty[FILES.site]) {
@@ -776,7 +810,7 @@
       if (!paths.length && !uploads.length) { msg('pubMsg', 'تغییری برای انتشار نیست.', true); return; }
       var btn = document.getElementById('publishBtn');
       btn.disabled = true;
-      msg('pubMsg', 'در حالِ انتشار… (' + R.fa(paths.length + uploads.length) + ' فایل)', true);
+      msg('pubMsg', 'در حالِ بررسیِ اتصال به گیت‌هاب…', true);
       var okItems = [], errItems = [];
 
       function sendFile(path) {
@@ -797,26 +831,35 @@
           .catch(function (e) { errItems.push(u.path + ' ← ' + ghErrText(e)); });
       }
 
-      runSeq(paths, sendFile)
-        .then(function () { return runSeq(uploads, sendUpload); })
-        .then(function () {
-          btn.disabled = false;
-          saveLocal(); saveDirty(); renderDirty();
-          var okMsg = okItems.length
-            ? R.fa(okItems.length) + ' فایل منتشر شد: ' + okItems.join('، ')
-            : 'هیچ فایلی منتشر نشد.';
-          if (!errItems.length) {
-            addLog(true, okMsg, []);
-            showResult(true, '✨ انتشار کامل شد', [okMsg, 'سایتِ تازه را با یک رفرش ببین.']);
-            msg('pubMsg', '✨ منتشر شد!', true);
-          } else {
-            addLog(false,
-              R.fa(okItems.length) + ' فایل منتشر شد، ' + R.fa(errItems.length) + ' مورد خطا خورد.',
-              errItems);
-            showResult(false, '⚠️ انتشار ناقص ماند', errItems.concat(['', 'متنِ بالا با دکمهٔ کپی برداشته می‌شود. بعد از رفعِ مشکل، دوباره «انتشار» را بزن؛ فقط فایل‌هایِ ناتمام دوباره فرستاده می‌شوند.']));
-            msg('pubMsg', 'انتشار ناقص ماند — جزئیات در جعبهٔ زیر.', false);
-          }
-        });
+      preflight().then(function () {
+        msg('pubMsg', 'در حالِ انتشار… (' + R.fa(paths.length + uploads.length) + ' فایل)', true);
+        return runSeq(paths, sendFile)
+          .then(function () { return runSeq(uploads, sendUpload); })
+          .then(function () {
+            btn.disabled = false;
+            saveLocal(); saveDirty(); renderDirty();
+            var okMsg = okItems.length
+              ? R.fa(okItems.length) + ' فایل منتشر شد: ' + okItems.join('، ')
+              : 'هیچ فایلی منتشر نشد.';
+            if (!errItems.length) {
+              addLog(true, okMsg, []);
+              showResult(true, '✨ انتشار کامل شد', [okMsg, 'سایتِ تازه را با یک رفرش ببین.']);
+              msg('pubMsg', '✨ منتشر شد!', true);
+            } else {
+              addLog(false,
+                R.fa(okItems.length) + ' فایل منتشر شد، ' + R.fa(errItems.length) + ' مورد خطا خورد.',
+                errItems);
+              showResult(false, '⚠️ انتشار ناقص ماند', errItems.concat(['', 'متنِ بالا با دکمهٔ کپی برداشته می‌شود. بعد از رفعِ مشکل، دوباره «انتشار» را بزن؛ فقط فایل‌هایِ ناتمام دوباره فرستاده می‌شوند.']));
+              msg('pubMsg', 'انتشار ناقص ماند — جزئیات در جعبهٔ زیر.', false);
+            }
+          });
+      }).catch(function (e) {
+        /* اتصال یا دسترسی مشکل داشت: قبل از فرستادنِ فایل‌ها، با یک گزارشِ روشن بایست */
+        btn.disabled = false;
+        addLog(false, 'اتصال به گیت‌هاب برقرار نشد — هیچ فایلی فرستاده نشد', [ghErrText(e)]);
+        showResult(false, '⚠️ انتشار متوقف شد: اتصال به گیت‌هاب', [ghErrText(e), '', 'متنِ بالا با دکمهٔ کپی برداشته می‌شود.']);
+        msg('pubMsg', 'انتشار متوقف شد — جزئیات در جعبهٔ زیر.', false);
+      });
     }).catch(function (e) {
       /* هر خطایِ پیش‌بینی‌نشده هم به‌جای سکوت، در جعبهٔ گزارش نمایش داده می‌شود */
       var btn = document.getElementById('publishBtn');
