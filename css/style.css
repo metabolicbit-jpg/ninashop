@@ -917,3 +917,19 @@ html[data-theme='night'] .log-item.err { background: #3a2222; }
   background: var(--surface); cursor: pointer;
 }
 .color-pick input[type='text'], .color-pick input:not([type='color']) { flex: 1; min-width: 0; }
+
+/* ---------- منویِ بازشویِ دسته (combobox استاندارد) ---------- */
+.combo { position: relative; }
+.cat-menu {
+  position: absolute; top: calc(100% + 6px); inset-inline: 0; z-index: 40;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,.16);
+  padding: 6px; max-height: 230px; overflow-y: auto;
+}
+.cat-menu button {
+  display: block; width: 100%; text-align: start;
+  padding: 10px 12px; border: 0; background: none; border-radius: 9px;
+  font: inherit; font-size: .9rem; color: var(--text); cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.cat-menu button:hover, .cat-menu button:active { background: var(--tint); color: var(--accent); }

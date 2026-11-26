@@ -61,10 +61,14 @@
           <h3 id="editorTitle">ویرایشِ محصول</h3>
           <div class="field"><label>نام</label><input id="f-name"></div>
           <div class="field-row">
-            <div class="field"><label>دسته</label><input id="f-category" placeholder="شُرت زنانه"></div>
+            <div class="field"><label>دسته</label>
+              <div class="combo">
+                <input id="f-category" placeholder="شُرت زنانه" autocomplete="off">
+                <div id="catMenu" class="cat-menu" hidden></div>
+              </div>
+            </div>
             <div class="field"><label>برچسب (اختیاری)</label><input id="f-badge" placeholder="جدید / پرفروش‌ترین"></div>
           </div>
-          <div class="hint" id="catChips" style="margin:-4px 0 12px"></div>
           <div class="field-row">
             <div class="field"><label>قیمت (تومان)</label><input id="f-price" inputmode="numeric"></div>
             <div class="field"><label>قیمتِ قبل (۰ = ندارد)</label><input id="f-oldPrice" inputmode="numeric"></div>

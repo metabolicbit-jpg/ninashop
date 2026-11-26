@@ -236,13 +236,6 @@
         return '<button class="cat-chip' + (adminCat === n ? ' on' : '') + '" data-cat="' + R.esc(n) + '">' + R.esc(n) + '</button>';
       }).join('');
   }
-  function renderCatChips() {
-    var box = document.getElementById('catChips');
-    if (!box) return;
-    box.innerHTML = allCatNames().map(function (n) {
-      return '<button class="cat-chip" data-fill="' + R.esc(n) + '" type="button">' + R.esc(n) + '</button>';
-    }).join('') || 'هنوز دسته‌ای نساخته‌ای؛ اسمِ دسته را بنویس.';
-  }
 
   function renderProducts() {
     var box = document.getElementById('productList');
@@ -301,7 +294,6 @@
     var c1 = document.getElementById('f-cover1c'), c2 = document.getElementById('f-cover2c');
     if (c1) c1.value = (p.cover && p.cover[0]) || '#f8c8d8';
     if (c2) c2.value = (p.cover && p.cover[1]) || '#fde8ef';
-    renderCatChips();
     set('f-sizes', (p.sizes || []).join(', '));
     set('f-status', p.status || 'active'); set('f-featured', p.featured ? '1' : '0');
     set('f-stock', p.stock ? R.faG(p.stock) : '');
@@ -496,7 +488,6 @@
     }).join('') || '<p class="hint">هنوز دسته‌ای نیست.</p>';
     /* پیشنهادِ نامِ دسته در فرمِ محصول */
     renderAdminCatFilter();
-    renderCatChips();
   }
 
   function openCEditor(idx) {
@@ -689,7 +680,7 @@
     if (/401/.test(m)) return 'توکنِ گیت‌هاب نامعتبر یا باطل شده (401). توکنِ تازه بساز و در تبِ ورود وارد کن.';
     if (/403/.test(m) && /rate/i.test(m)) return 'محدودیتِ موقتِ گیت‌هاب (403 rate limit). چند دقیقه صبر کن و دوباره «انتشار» را بزن.';
     if (/403/.test(m)) return 'دسترسی رد شد (403). توکن باید مجوزِ «Contents: Read and write» روی همین مخزن داشته باشد.';
-    if (/404/.test(m)) return 'مخزن پیدا نشد (404). نامِ کاربری و نامِ مخزن را در تبِ ورود چک کن.';
+    if (/404|not found/i.test(m)) return 'پیدا نشد (404 Not Found). دو علتِ رایج: ۱) نامِ کاربری یا نامِ مخزن در تبِ ورود اشتباه است. ۲) توکنِ تازه به این مخزن دسترسی ندارد — در توکنِ Fine-grained باید در بخشِ Repository access مخزنِ ninashop انتخاب شده باشد و در Permissions گزینهٔ «Contents: Read and write» فعال باشد. بعد از اصلاحِ توکن، آن را در تبِ ورود دوباره وارد کن.';
     if (/409|422/.test(m)) return 'تداخلِ نسخهٔ فایل (409/422). دوباره «انتشار» را بزن؛ معمولاً خودکار حل می‌شود.';
     if (/fetch|network|Network/i.test(m)) return 'شبکه قطع بود یا گیت‌هاب پاسخ نداد. اینترنت را چک کن و دوباره «انتشار» را بزن.';
     return m;
@@ -865,13 +856,30 @@
       adminCat = b.dataset.cat;
       renderAdminCatFilter(); renderProducts();
     });
-    /* چیپ‌هایِ دسته در فرمِ محصول */
-    document.getElementById('catChips').addEventListener('click', function (e) {
-      var b = e.target.closest('[data-fill]');
-      if (!b) return;
-      var inp = document.getElementById('f-category');
-      if (inp) { inp.value = b.dataset.fill; inp.focus(); }
-    });
+    /* منویِ بازشویِ دسته در فرمِ محصول: لمس یا تمرکز = پنجرهٔ انتخابِ تمیز */
+    var catInp = document.getElementById('f-category'), catMenu = document.getElementById('catMenu');
+    function openCatMenu() {
+      if (!catMenu) return;
+      var names = allCatNames();
+      catMenu.innerHTML = names.map(function (n) {
+        return '<button type="button" data-pick="' + R.esc(n) + '">' + R.esc(n) + '</button>';
+      }).join('') || '<div class="hint" style="padding:8px 12px">هنوز دسته‌ای نساخته‌ای؛ اسمش را بنویس.</div>';
+      catMenu.hidden = false;
+    }
+    function closeCatMenu() { if (catMenu) catMenu.hidden = true; }
+    if (catInp && catMenu) {
+      catInp.addEventListener('focus', openCatMenu);
+      catInp.addEventListener('click', openCatMenu);
+      catMenu.addEventListener('pointerdown', function (e) {
+        var b = e.target.closest('[data-pick]');
+        if (!b) return;
+        e.preventDefault();   /* تا blur قبل از انتخاب، منو نبندد */
+        catInp.value = b.dataset.pick;
+        closeCatMenu();
+        catInp.blur();
+      });
+      catInp.addEventListener('blur', function () { setTimeout(closeCatMenu, 160); });
+    }
     /* پالتِ رنگِ کاور: هم‌گامِ دوسویه با فیلدِ متنی */
     function bindColorPair(cId, tId) {
       var c = document.getElementById(cId), t = document.getElementById(tId);
