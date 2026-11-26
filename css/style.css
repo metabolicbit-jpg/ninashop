@@ -235,6 +235,59 @@ button { cursor: pointer; border: none; background: none; color: inherit; }
 .hero-card .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .hero-card .name { font-weight: 700; }
 .hero-card .price { color: var(--accent); font-weight: 800; }
+
+/* ---------- اسلایدرِ محصولاتِ ویژه (بخشِ ویژهٔ صفحهٔ اصلی) ---------- */
+.fslider { position: relative; overflow: hidden; touch-action: pan-y; }
+.ftrack {
+  display: flex;
+  transition: transform .45s cubic-bezier(.22, .9, .3, 1);
+  will-change: transform;
+}
+.fslide { min-width: 100%; }
+.fcard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--r) + 6px);
+  padding: 16px;
+  box-shadow: var(--shadow-2);
+}
+.fcard .cover { height: 230px; margin-bottom: 14px; }
+.frow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.fname { font-weight: 700; }
+.fprice { color: var(--accent); font-weight: 800; white-space: nowrap; }
+.fview {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 11px;
+  border-radius: var(--r-s);
+  background: var(--accent); color: var(--accent-ink);
+  font-weight: 700; font-size: .95rem;
+  transition: filter .2s ease;
+}
+.fview:hover { filter: brightness(1.06); }
+.fview .ic { width: 18px; height: 18px; }
+.fdots { display: flex; gap: 6px; justify-content: center; margin-top: 12px; }
+.fdots button {
+  width: 8px; height: 8px; padding: 0;
+  border: 0; border-radius: 999px;
+  background: var(--border);
+  cursor: pointer;
+  transition: width .25s ease, background .25s ease;
+}
+.fdots button.active { width: 22px; background: var(--accent); }
+
+/* عکسِ خالص: بدونِ قاب و رنگِ کاور */
+.cover.bare { padding: 0; background: none !important; }
+.cover.bare::after { display: none; }
+.cover.bare img { border-radius: 0; box-shadow: none; }
+
+/* نشانِ درصدِ تخفیف */
+.badge.off { background: #e8536f; }
+.off-chip {
+  display: inline-block;
+  background: #e8536f; color: #fff;
+  font-size: .78rem; font-weight: 700;
+  padding: 3px 10px; border-radius: 999px;
+}
 .sparkle {
   position: absolute; color: var(--accent);
   opacity: .55; animation: twinkle 3.2s ease-in-out infinite;
@@ -933,3 +986,7 @@ html[data-theme='night'] .log-item.err { background: #3a2222; }
   -webkit-tap-highlight-color: transparent;
 }
 .cat-menu button:hover, .cat-menu button:active { background: var(--tint); color: var(--accent); }
+
+/* چک‌باکسِ عکسِ خالص در پنل */
+.bare-check { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: .9rem; cursor: pointer; }
+.bare-check input { width: 18px; height: 18px; accent-color: var(--accent, #e56a92); }

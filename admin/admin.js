@@ -333,6 +333,8 @@
     set('f-sizes', (p.sizes || []).join(', '));
     set('f-status', p.status || 'active'); set('f-featured', p.featured ? '1' : '0');
     set('f-stock', p.stock ? R.faG(p.stock) : '');
+    var fBare = document.getElementById('f-bare');
+    if (fBare) fBare.checked = !!p.bare;
     /* رنگ‌ها */
     document.getElementById('colorRows').innerHTML = '';
     (p.colors || []).forEach(function (c) {
@@ -372,6 +374,8 @@
     p.status = get('f-status') || 'active';
     p.featured = get('f-featured') === '1' ? 1 : 0;
     p.stock = Number(R.normDigits(get('f-stock')).replace(/[^\d]/g, '')) || '';
+    var fBare = document.getElementById('f-bare');
+    p.bare = (fBare && fBare.checked) ? 1 : 0;
     /* عکس */
     if (imageRemoved) { p.image = ''; }
     if (pendingImage) {

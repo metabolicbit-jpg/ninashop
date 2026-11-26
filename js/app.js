@@ -25,7 +25,7 @@
 
   function coverInner(p, big) {
     if (p.image) {
-      return '<div class="cover with-img" style="' + coverStyle(p) + '">' +
+      return '<div class="cover with-img' + (p.bare ? ' bare' : '') + '" style="' + (p.bare ? '' : coverStyle(p)) + '">' +
         '<img src="' + R.esc(R.imgSrc(p)) + '" alt="' + R.esc(p.name) + '" loading="lazy">' +
         '</div>';
     }
@@ -34,6 +34,13 @@
     }
     if (p.art === 'none') return '<div class="cover" style="' + coverStyle(p) + '"></div>';
     return '<div class="cover" style="' + coverStyle(p) + '">' + R.icon(p.icon || 'heart') + '</div>';
+  }
+
+  /* نشانِ درصدِ تخفیف: وقتی قیمتِ پیش از تخفیف بالاتر از قیمتِ فعلی باشد */
+  function discountBadge(p) {
+    var o = Number(p.oldPrice), n = Number(p.price);
+    if (!(o > n && n > 0)) return '';
+    return '<span class="badge off">٪' + R.fa(Math.round((o - n) / o * 100)) + ' تخفیف</span>';
   }
 
   function colorChip(c) {
@@ -82,6 +89,7 @@
         '<button type="button" class="wish-btn' + (R.wishHas(p.id) ? ' active' : '') + '" data-wish="' + R.esc(p.id) + '" aria-label="افزودن به علاقه‌مندی‌ها">' + R.icon('heart') + '</button>' +
         '<a href="product.html?id=' + encodeURIComponent(p.id) + '" aria-label="' + R.esc(p.name) + '">' +
           (soon ? '<span class="badge soon">به‌زودی</span>' : (p.badge ? '<span class="badge">' + R.esc(p.badge) + '</span>' : '')) +
+          discountBadge(p) +
           coverInner(p) +
         '</a>' +
         '<div class="card-body">' +
@@ -241,19 +249,77 @@
     }
   });
 
-  function renderHeroCard() {
+  /* ---------- بخشِ ویژهٔ صفحهٔ اصلی: اسلایدرِ کارتیِ محصولاتِ ویژه ----------
+     هر محصولِ «ویژه» یک کارت با دکمهٔ «دیدن» دارد که به صفحهٔ اختصاصی‌اش می‌رود.
+     اسلایدر هم خودکار می‌چرخد، هم با کشیدنِ دست جابجا می‌شود؛ نقطه‌ها هم قابلِ کلیک‌اند. */
+  function renderFeaturedSlider() {
     var el = document.getElementById('heroCard');
     if (!el) return;
-    var hero = products.filter(function (p) { return p.status !== 'hidden' && p.featured; })[0] ||
-               products.filter(function (p) { return p.status !== 'hidden'; })[0];
-    if (!hero) { el.style.display = 'none'; return; }
+    var feat = products.filter(function (p) { return p.status !== 'hidden' && p.featured; });
+    if (!feat.length) feat = products.filter(function (p) { return p.status !== 'hidden'; }).slice(0, 3);
+    if (!feat.length) { el.style.display = 'none'; return; }
+    el.removeAttribute('aria-hidden');
+    el.style.animation = 'none';   /* اسلایدر نباید شناور باشد؛ نقطه‌ها زیرِ دست جابجا نشوند */
     el.innerHTML =
-      coverInner(hero) +
-      '<div class="row"><span class="name">' + R.esc(hero.name) + '</span>' +
-      '<span class="price">' + R.faPrice(hero.price) + ' <small>تومان</small></span></div>' +
-      '<span class="sparkle" style="top:14px;inset-inline-end:18px">' + R.icon('sparkles') + '</span>' +
-      '<span class="sparkle" style="bottom:52px;inset-inline-start:14px;animation-delay:-1.6s">' + R.icon('sparkles') + '</span>';
-    el.setAttribute('aria-hidden', 'true');
+      '<div class="fslider" id="fslider">' +
+        '<div class="ftrack" id="ftrack">' +
+          feat.map(function (p) {
+            return '<div class="fslide"><div class="fcard">' +
+              '<a href="product.html?id=' + encodeURIComponent(p.id) + '" aria-label="' + R.esc(p.name) + '">' +
+                coverInner(p) +
+              '</a>' +
+              '<div class="frow"><span class="fname">' + R.esc(p.name) + '</span>' +
+                '<span class="fprice">' + R.faPrice(p.price) + ' <small>تومان</small></span></div>' +
+              '<a class="fview" href="product.html?id=' + encodeURIComponent(p.id) + '">' +
+                R.icon('eye') + ' دیدنِ محصول</a>' +
+            '</div></div>';
+          }).join('') +
+        '</div>' +
+        '<div class="fdots">' + feat.map(function (_, i) {
+          return '<button type="button" data-dot="' + i + '" aria-label="اسلایدِ ' + R.fa(i + 1) + '"></button>';
+        }).join('') + '</div>' +
+      '</div>';
+
+    var track = el.querySelector('#ftrack');
+    var zone = el.querySelector('#fslider');
+    var dots = Array.prototype.slice.call(el.querySelectorAll('.fdots button'));
+    var fi = 0, ftimer = null;
+
+    function paint() {
+      track.style.transform = 'translateX(' + (fi * 100) + '%)';
+      dots.forEach(function (d, i) { d.classList.toggle('active', i === fi); });
+    }
+    function stopAuto() { if (ftimer) { clearInterval(ftimer); ftimer = null; } }
+    function startAuto() { stopAuto(); ftimer = setInterval(function () { fgo(fi + 1); }, 5000); }
+    function fgo(i) { fi = (i + feat.length) % feat.length; paint(); }
+
+    dots.forEach(function (d) {
+      d.addEventListener('click', function () { fgo(Number(d.dataset.dot)); startAuto(); });
+    });
+    /* کشیدنِ با دست: در راست‌به‌چپ، اسلایدِ بعدی سمتِ چپ است */
+    var sx = null, dx = 0;
+    zone.addEventListener('touchstart', function (e) { sx = e.touches[0].clientX; dx = 0; stopAuto(); }, { passive: true });
+    zone.addEventListener('touchmove', function (e) {
+      if (sx === null) return;
+      dx = e.touches[0].clientX - sx;
+      track.style.transition = 'none';
+      track.style.transform = 'translateX(' + (fi * 100 + (-dx / zone.offsetWidth * 100)) + '%)';
+    }, { passive: true });
+    zone.addEventListener('touchend', function () {
+      track.style.transition = '';
+      if (Math.abs(dx) > 40) fgo(fi + (dx < 0 ? 1 : -1));
+      else paint();
+      startAuto();
+      sx = null;
+    });
+    zone.addEventListener('mouseenter', stopAuto);
+    zone.addEventListener('mouseleave', startAuto);
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) stopAuto(); else startAuto();
+    });
+
+    paint();
+    startAuto();
   }
 
   /* ---------- اسلایدرِ نظرات: فقط کارتِ جلو لغزش می‌کند؛ کارت‌هایِ پشت ثابت‌اند.
@@ -505,7 +571,7 @@
         renderWishlist();
       } else {
         renderProducts();
-        renderHeroCard();
+        renderFeaturedSlider();
         renderTestimonials();
       }
       R.paintIcons();

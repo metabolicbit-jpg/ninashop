@@ -82,12 +82,15 @@
     }).join('');
     var colorChips = (p.colors || []).map(colorChip).join('');
     var old = (p.oldPrice && Number(p.oldPrice) > Number(p.price))
-      ? '<span class="old-price">' + R.faG(p.oldPrice) + ' تومان</span>' : '';
+      ? '<span class="old-price">' + R.faG(p.oldPrice) + ' تومان</span>' +
+        '<span class="off-chip">٪' + R.fa(Math.round((Number(p.oldPrice) - Number(p.price)) / Number(p.oldPrice) * 100)) + ' تخفیف</span>'
+      : '';
 
     var page = document.getElementById('productPage');
     var hasArt = p.art && R.ART && R.ART[p.art];
+    var bare = !!p.bare;
     var cover = p.image
-      ? '<div class="cover with-img" style="' + coverStyle(p) + '"><img src="' + R.esc(R.imgSrc(p)) + '" alt="' + R.esc(p.name) + '"></div>'
+      ? '<div class="cover with-img' + (bare ? ' bare' : '') + '" style="' + (bare ? '' : coverStyle(p)) + '"><img src="' + R.esc(R.imgSrc(p)) + '" alt="' + R.esc(p.name) + '"></div>'
       : '<div class="cover' + (hasArt ? ' with-art' : '') + '" style="' + coverStyle(p) + '">' +
         (hasArt ? R.art(p.art) : (p.art === 'none' ? '' : R.icon(p.icon || 'heart'))) + '</div>';
     var soon = p.status === 'soon';
@@ -167,7 +170,7 @@
         return '<article class="card">' +
           '<a href="product.html?id=' + encodeURIComponent(x.id) + '" aria-label="' + R.esc(x.name) + '">' +
             (x.image
-              ? '<div class="cover with-img" style="' + coverStyle(x) + '"><img src="' + R.esc(R.imgSrc(x)) + '" alt="' + R.esc(x.name) + '" loading="lazy"></div>'
+              ? '<div class="cover with-img' + (x.bare ? ' bare' : '') + '" style="' + (x.bare ? '' : coverStyle(x)) + '"><img src="' + R.esc(R.imgSrc(x)) + '" alt="' + R.esc(x.name) + '" loading="lazy"></div>'
               : '<div class="cover' + ((x.art && R.ART && R.ART[x.art]) ? ' with-art' : '') + '" style="' + coverStyle(x) + '">' +
                 ((x.art && R.ART && R.ART[x.art]) ? R.art(x.art) : (x.art === 'none' ? '' : R.icon(x.icon || 'heart'))) + '</div>') +
           '</a>' +
