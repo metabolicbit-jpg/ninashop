@@ -581,6 +581,16 @@ button.chip { font-family: inherit; }
 .admin-item .meta b { display: block; font-size: .93rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .admin-item .meta span { color: var(--muted); font-size: .8rem; }
 .admin-item .acts { display: flex; gap: 6px; flex-shrink: 0; }
+/* موبایلِ پنل: متن در ردیفِ کاملِ خودش، افقی و خوانا */
+@media (max-width: 640px) {
+  .admin-item { flex-wrap: wrap; row-gap: 4px; padding: 12px; }
+  .admin-item .meta { order: 3; flex: 1 1 100%; }
+  .admin-item .meta b { white-space: normal; font-size: .95rem; line-height: 1.7; }
+  .admin-item .meta span { display: block; margin-top: 3px; line-height: 1.8; }
+  .admin-item .acts { margin-inline-start: auto; }
+  .admin-item .status-pill { margin-inline-end: auto; }
+  .admin-item .hint { margin-inline-start: auto; }
+}
 .mini-btn {
   width: 34px; height: 34px; border-radius: 8px;
   display: grid; place-items: center;
@@ -848,3 +858,18 @@ html[data-theme='night'] .msg.err { background: #3a2222; }
   .bottom-nav a:active { transform: scale(.93); }
   .bottom-nav a.active { background: var(--tint); color: var(--accent); }
 }
+
+/* ---------- توستِ پنل: بازخوردِ ذخیره/انتشار در هر تب ---------- */
+.toast {
+  position: fixed; z-index: 200;
+  top: 16px; left: 50%; transform: translate(-50%, -12px);
+  max-width: min(92vw, 420px);
+  padding: 11px 18px; border-radius: 14px;
+  font-size: .86rem; font-weight: 600; line-height: 1.7;
+  opacity: 0; pointer-events: none;
+  box-shadow: 0 12px 32px rgba(0,0,0,.18);
+  transition: opacity .22s ease, transform .22s ease;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.ok { background: #2e9e6b; color: #fff; }
+.toast.err { background: #c74e4e; color: #fff; }

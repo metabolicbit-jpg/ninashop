@@ -1,8 +1,10 @@
 /* ============================================================
    نینا شاپ — سرویس‌ورکر: نصب‌پذیریِ PWA و کارکردِ آفلاین
-   استراتژی (سریع‌ترین حالت):
-   - همهٔ درخواست‌ها: اول حافظه (پاسخِ آنی)، به‌روزرسانی در پس‌زمینه
-     (stale-while-revalidate) — بارگیریِ دوبارهٔ صفحه‌ها آنی است
+   استراتژی:
+   - صفحه‌ها (HTML): اول حافظه، به‌روزرسانی در پس‌زمینه — بازشدنِ آنی
+   - داده‌هایِ JSON: اول شبکه (تازگیِ محتوا بعد از انتشار)، در نبودِ
+     اینترنت حافظه — فایل‌ها کوچک‌اند و هزینه‌ای ندارند
+   - فایل‌هایِ ثابت (css/js/فونت/آیکون): اول حافظه، سریع مثل اپ
    ============================================================ */
 var CACHE = 'nina_v2';
 var CORE = [
@@ -58,17 +60,53 @@ self.addEventListener('fetch', function (e) {
   var url = new URL(req.url);
   if (url.origin !== location.origin) return;   /* واتساپ و اینستاگرام دستِ خودِ مرورگر */
 
-  /* stale-while-revalidate: پاسخِ ذخیره‌شده همان لحظه، نسخهٔ تازه در پس‌زمینه */
-  e.respondWith(
-    caches.match(req).then(function (hit) {
-      var net = fetch(req).then(function (res) {
+  var isNav = req.mode === 'navigate';
+  var isData = /\.json$/.test(url.pathname);
+
+  if (isData) {
+    /* داده: اول شبکه (تازه)، در نبودِ اینترنت آخرین نسخهٔ ذخیره‌شده */
+    e.respondWith(
+      fetch(req).then(function (res) {
         if (res && res.ok) {
           var copy = res.clone();
           caches.open(CACHE).then(function (c) { c.put(req, copy); });
         }
         return res;
-      }).catch(function () { return hit || Response.error(); });
-      return hit || net;
+      }).catch(function () {
+        return caches.match(req).then(function (hit) { return hit || Response.error(); });
+      })
+    );
+    return;
+  }
+
+  if (isNav) {
+    /* صفحه: پاسخِ ذخیره‌شده همان لحظه، نسخهٔ تازه در پس‌زمینه */
+    e.respondWith(
+      caches.match(req).then(function (hit) {
+        var net = fetch(req).then(function (res) {
+          if (res && res.ok) {
+            var copy = res.clone();
+            caches.open(CACHE).then(function (c) { c.put(req, copy); });
+          }
+          return res;
+        }).catch(function () { return hit || caches.match('./') || Response.error(); });
+        return hit || net;
+      })
+    );
+    return;
+  }
+
+  /* فایلِ ثابت: اول حافظه */
+  e.respondWith(
+    caches.match(req).then(function (hit) {
+      if (hit) return hit;
+      return fetch(req).then(function (res) {
+        if (res && res.ok) {
+          var copy = res.clone();
+          caches.open(CACHE).then(function (c) { c.put(req, copy); });
+        }
+        return res;
+      });
     })
   );
 });

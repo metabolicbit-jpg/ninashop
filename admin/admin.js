@@ -199,7 +199,17 @@
   }
 
   /* ---------- پیام‌ها ---------- */
+  var toastTimer = null;
+  function toast(text, ok) {
+    var el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'toast show ' + (ok ? 'ok' : 'err');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.className = 'toast'; }, 3500);
+  }
   function msg(id, text, ok) {
+    toast(text, ok);   /* بازخورد در هر تب دیده می‌شود */
     var el = document.getElementById(id);
     if (!el) return;
     el.textContent = text;
@@ -498,7 +508,7 @@
     data.site.shipping = get('s-shipping');
     data.site.guarantee = get('s-guarantee');
     saveLocal(); markDirty('site');
-    msg('pubMsg', 'هویتِ سایت ذخیره شد.', true);
+    msg('pubMsg', 'هویتِ سایت ذخیره شد. برای اعمال در سایت، «انتشار» را بزن.', true);
   }
   function saveChannels() {
     data.site.channels = {
@@ -508,7 +518,7 @@
       phone: get('s-phone')
     };
     saveLocal(); markDirty('site');
-    msg('pubMsg', 'کانال‌ها ذخیره شدند.', true);
+    msg('pubMsg', 'کانال‌ها ذخیره شدند. برای اعمال در سایت، «انتشار» را بزن.', true);
   }
 
   /* ---------- پشتیبان ---------- */
