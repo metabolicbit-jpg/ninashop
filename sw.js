@@ -69,8 +69,10 @@ self.addEventListener('fetch', function (e) {
     e.respondWith(
       new Promise(function (resolve) {
         var settled = false;
-        var timer = setTimeout(function () { if (!settled) { settled = true; resolve(null); } }, 2500);
-        fetch(req).then(function (res) {
+        /* داده (JSON) با no-cache می‌رود تا کشِ HTTPِ مرورگر (max-age ۶۰۰ ثانیه‌ایِ گیت‌هاب‌پیجز)
+           نسخهٔ کهنه را به‌جای شبکه پس ندهد؛ وگرنه تا ده دقیقه بعد از انتشار، سایت قدیمی را نشان می‌دهد */
+        var timer = setTimeout(function () { if (!settled) { settled = true; resolve(null); } }, isData ? 6000 : 2500);
+        fetch(req, { cache: isData ? 'no-cache' : 'default' }).then(function (res) {
           if (!settled) { settled = true; clearTimeout(timer); resolve(res); }
         }).catch(function () {
           if (!settled) { settled = true; clearTimeout(timer); resolve(null); }
