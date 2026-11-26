@@ -793,6 +793,12 @@
             msg('pubMsg', 'انتشار ناقص ماند — جزئیات در جعبهٔ زیر.', false);
           }
         });
+    }).catch(function (e) {
+      /* هر خطایِ پیش‌بینی‌نشده هم به‌جای سکوت، در جعبهٔ گزارش نمایش داده می‌شود */
+      var btn = document.getElementById('publishBtn');
+      if (btn) btn.disabled = false;
+      showResult(false, '⚠️ انتشار متوقف شد', [ghErrText(e), '', 'متنِ بالا با دکمهٔ کپی برداشته می‌شود.']);
+      msg('pubMsg', 'انتشار متوقف شد — جزئیات در جعبهٔ زیر.', false);
     });
   }
 
@@ -812,8 +818,18 @@
   }
 
   /* ---------- اتصالِ رویدادها ---------- */
+  /* اتصالِ امنِ رویداد: نبودنِ یک عنصر هرگز بقیهٔ اتصال‌ها را نمی‌شکند */
+  function on(id, evt, fn) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener(evt, fn);
+  }
+  function q(sel, evt, fn) {
+    var el = document.querySelector(sel);
+    if (el) el.addEventListener(evt, fn);
+  }
+
   function bind() {
-    document.getElementById('loginBtn').addEventListener('click', function () {
+    on('loginBtn', 'click', function () {
       var u = get('ghUser'), r = get('ghRepo'), t = get('ghToken');
       if (!u || !r || !t) { msg('loginMsg', 'هر سه فیلد را پر کن.', false); return; }
       localStorage.setItem(K_USER, u);
@@ -821,7 +837,7 @@
       localStorage.setItem(K_TOKEN, t);
       showPanel();
     });
-    document.getElementById('logoutBtn').addEventListener('click', function () {
+    on('logoutBtn', 'click', function () {
       localStorage.removeItem(K_TOKEN);
       showLogin();
     });
@@ -847,10 +863,10 @@
       if (a) { e.preventDefault(); activatePane(a.dataset.pane); }
     });
 
-    document.getElementById('addProduct').addEventListener('click', function () { openEditor(null); });
-    document.getElementById('saveProduct').addEventListener('click', saveProduct);
+    on('addProduct', 'click', function () { openEditor(null); });
+    on('saveProduct', 'click', saveProduct);
     /* فیلترِ دسته در تبِ محصولات */
-    document.getElementById('adminCatFilter').addEventListener('click', function (e) {
+    on('adminCatFilter', 'click', function (e) {
       var b = e.target.closest('[data-cat]');
       if (!b) return;
       adminCat = b.dataset.cat;
@@ -893,7 +909,7 @@
     bindColorPair('f-cover1c', 'f-cover1');
     bindColorPair('f-cover2c', 'f-cover2');
     /* عکس */
-    document.getElementById('f-image').addEventListener('change', function (e) {
+    on('f-image', 'change', function (e) {
       var f = e.target.files[0];
       if (!f) return;
       if (!/^image\//.test(f.type)) { msg('pubMsg', 'فقط فایلِ عکس.', false); return; }
@@ -902,15 +918,15 @@
         setImagePreview(b64);
       }).catch(function (err) { msg('pubMsg', err.message, false); });
     });
-    document.getElementById('removeImg').addEventListener('click', function () {
+    on('removeImg', 'click', function () {
       pendingImage = null; imageRemoved = true; setImagePreview(null);
     });
     /* رنگ‌ها */
-    document.getElementById('addColor').addEventListener('click', function () { addColorRow('', '#f8c8d8'); });
-    document.getElementById('cancelEdit').addEventListener('click', function () {
+    on('addColor', 'click', function () { addColorRow('', '#f8c8d8'); });
+    on('cancelEdit', 'click', function () {
       document.getElementById('productEditor').style.display = 'none'; editing = null;
     });
-    document.getElementById('productList').addEventListener('click', function (e) {
+    on('productList', 'click', function (e) {
       var b = e.target.closest('[data-edit]');
       if (b) { openEditor(Number(b.dataset.edit)); return; }
       var d = e.target.closest('[data-del]');
@@ -923,12 +939,12 @@
       }
     });
 
-    document.getElementById('addTestimonial').addEventListener('click', function () { openTEditor(null); });
-    document.getElementById('saveTestimonial').addEventListener('click', saveTestimonial);
-    document.getElementById('cancelT').addEventListener('click', function () {
+    on('addTestimonial', 'click', function () { openTEditor(null); });
+    on('saveTestimonial', 'click', saveTestimonial);
+    on('cancelT', 'click', function () {
       document.getElementById('testimonialEditor').style.display = 'none'; editingT = null;
     });
-    document.getElementById('testimonialList').addEventListener('click', function (e) {
+    on('testimonialList', 'click', function (e) {
       var b = e.target.closest('[data-tedit]');
       if (b) { openTEditor(Number(b.dataset.tedit)); return; }
       var d = e.target.closest('[data-tdel]');
@@ -941,14 +957,14 @@
       }
     });
 
-    document.getElementById('saveSite').addEventListener('click', saveSite);
-    document.getElementById('saveChannels').addEventListener('click', saveChannels);
-    document.getElementById('addPost').addEventListener('click', function () { openPEditor(null); });
-    document.getElementById('savePost').addEventListener('click', savePost);
-    document.getElementById('cancelP').addEventListener('click', function () {
+    on('saveSite', 'click', saveSite);
+    on('saveChannels', 'click', saveChannels);
+    on('addPost', 'click', function () { openPEditor(null); });
+    on('savePost', 'click', savePost);
+    on('cancelP', 'click', function () {
       document.getElementById('postEditor').style.display = 'none'; editingP = null;
     });
-    document.getElementById('postList').addEventListener('click', function (e) {
+    on('postList', 'click', function (e) {
       var b = e.target.closest('[data-pedit]');
       if (b) { openPEditor(Number(b.dataset.pedit)); return; }
       var d = e.target.closest('[data-pdel]');
@@ -960,12 +976,12 @@
         }
       }
     });
-    document.getElementById('addFaq').addEventListener('click', function () { openQEditor(null); });
-    document.getElementById('saveFaq').addEventListener('click', saveFaq);
-    document.getElementById('cancelQ').addEventListener('click', function () {
+    on('addFaq', 'click', function () { openQEditor(null); });
+    on('saveFaq', 'click', saveFaq);
+    on('cancelQ', 'click', function () {
       document.getElementById('faqEditor').style.display = 'none'; editingQ = null;
     });
-    document.getElementById('faqList').addEventListener('click', function (e) {
+    on('faqList', 'click', function (e) {
       var b = e.target.closest('[data-qedit]');
       if (b) { openQEditor(Number(b.dataset.qedit)); return; }
       var d = e.target.closest('[data-qdel]');
@@ -977,12 +993,12 @@
         }
       }
     });
-    document.getElementById('addCategory').addEventListener('click', function () { openCEditor(null); });
-    document.getElementById('saveCategory').addEventListener('click', saveCategory);
-    document.getElementById('cancelC').addEventListener('click', function () {
+    on('addCategory', 'click', function () { openCEditor(null); });
+    on('saveCategory', 'click', saveCategory);
+    on('cancelC', 'click', function () {
       document.getElementById('catEditor').style.display = 'none'; editingC = null;
     });
-    document.getElementById('catList').addEventListener('click', function (e) {
+    on('catList', 'click', function (e) {
       var b = e.target.closest('[data-cedit]');
       if (b) { openCEditor(Number(b.dataset.cedit)); return; }
       var d = e.target.closest('[data-cdel]');
@@ -994,11 +1010,11 @@
         }
       }
     });
-    document.getElementById('publishBtn').addEventListener('click', publish);
-    document.getElementById('pubClose').addEventListener('click', function () {
+    on('publishBtn', 'click', publish);
+    on('pubClose', 'click', function () {
       document.getElementById('pubResult').style.display = 'none';
     });
-    document.getElementById('pubCopy').addEventListener('click', function () {
+    on('pubCopy', 'click', function () {
       var text = document.getElementById('pubResultBody').textContent;
       var done = function () { toast('گزارش کپی شد.', true); };
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1010,13 +1026,13 @@
         ta.select(); document.execCommand('copy'); ta.remove(); done();
       }
     });
-    document.getElementById('clearLog').addEventListener('click', function () {
+    on('clearLog', 'click', function () {
       if (confirm('همهٔ گزارشِ ارسال پاک شود؟')) {
         try { localStorage.removeItem(K_LOG); } catch (e) {}
         renderLog();
       }
     });
-    document.getElementById('pubLog').addEventListener('click', function (e) {
+    on('pubLog', 'click', function (e) {
       var b = e.target.closest('[data-logdel]');
       if (!b) return;
       var log = [];
@@ -1025,8 +1041,8 @@
       try { localStorage.setItem(K_LOG, JSON.stringify(log)); } catch (err) {}
       renderLog();
     });
-    document.getElementById('exportBtn').addEventListener('click', exportJSON);
-    document.getElementById('importFile').addEventListener('change', function (e) {
+    on('exportBtn', 'click', exportJSON);
+    on('importFile', 'change', function (e) {
       if (e.target.files[0]) importJSON(e.target.files[0]);
     });
   }
@@ -1036,6 +1052,15 @@
     R.initTheme();
     R.bindThemeToggle();
     R.paintIcons();
+
+    /* اول از همه: پنل یا ورود؟ — هر خطایِ بعدی نباید کاربر را بیرون بیندازد */
+    if (loggedIn()) showPanel(); else showLogin();
+    /* نامِ کاربری و مخزنِ قبلی در فرمِ ورود پیش‌پر می‌شود تا تایپِ مجدد و خطا نداشته باشد */
+    try {
+      var lu = localStorage.getItem(K_USER), lr = localStorage.getItem(K_REPO);
+      if (lu) document.getElementById('ghUser').value = lu;
+      if (lr) document.getElementById('ghRepo').value = lr;
+    } catch (e) {}
 
     /* دادهٔ محلی، وگرنه از فایل‌هایِ فعلیِ سایت */
     if (!loadLocal()) {
@@ -1062,7 +1087,6 @@
     renderDirty();
     renderLog();
     bind();
-    if (loggedIn()) showPanel(); else showLogin();
   }
 
   if (document.readyState === 'loading') {

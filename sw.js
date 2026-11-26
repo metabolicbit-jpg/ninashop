@@ -1,12 +1,12 @@
 /* ============================================================
    نینا شاپ — سرویس‌ورکر: نصب‌پذیریِ PWA و کارکردِ آفلاین
    استراتژی:
-   - صفحه‌ها (HTML): اول حافظه، به‌روزرسانی در پس‌زمینه — بازشدنِ آنی
-   - داده‌هایِ JSON: اول شبکه (تازگیِ محتوا بعد از انتشار)، در نبودِ
-     اینترنت حافظه — فایل‌ها کوچک‌اند و هزینه‌ای ندارند
-   - فایل‌هایِ ثابت (css/js/فونت/آیکون): اول حافظه، سریع مثل اپ
+   - کد (HTML، JS، CSS) و داده (JSON): اول شبکه با مهلتِ کوتاه —
+     بعد از هر به‌روزرسانی، نسخهٔ تازه همان بار می‌آید؛ کش فقط
+     پشتیبانِ وقتی است که شبکه دیر یا قطع باشد
+   - فونت و عکس: اول حافظه (نسخه‌دار و تغییرناپذیر)، سریع مثل اپ
    ============================================================ */
-var CACHE = 'nina_v3';
+var CACHE = 'nina_v4';
 var CORE = [
   './',
   'index.html',
@@ -62,41 +62,37 @@ self.addEventListener('fetch', function (e) {
 
   var isNav = req.mode === 'navigate';
   var isData = /\.json$/.test(url.pathname);
+  var isCode = isNav || isData || /\.(js|css)$/i.test(url.pathname) || /\.(html)$/i.test(url.pathname);
 
-  if (isData) {
-    /* داده: اول شبکه (تازه)، در نبودِ اینترنت آخرین نسخهٔ ذخیره‌شده */
+  if (isCode) {
+    /* کد و داده: اول شبکه با مهلتِ ۲.۵ ثانیه؛ در شکست، آخرین نسخهٔ ذخیره‌شده */
     e.respondWith(
-      fetch(req).then(function (res) {
+      new Promise(function (resolve) {
+        var settled = false;
+        var timer = setTimeout(function () { if (!settled) { settled = true; resolve(null); } }, 2500);
+        fetch(req).then(function (res) {
+          if (!settled) { settled = true; clearTimeout(timer); resolve(res); }
+        }).catch(function () {
+          if (!settled) { settled = true; clearTimeout(timer); resolve(null); }
+        });
+      }).then(function (res) {
         if (res && res.ok) {
           var copy = res.clone();
           caches.open(CACHE).then(function (c) { c.put(req, copy); });
-        }
-        return res;
-      }).catch(function () {
-        return caches.match(req).then(function (hit) { return hit || Response.error(); });
-      })
-    );
-    return;
-  }
-
-  if (isNav) {
-    /* صفحه: پاسخِ ذخیره‌شده همان لحظه، نسخهٔ تازه در پس‌زمینه */
-    e.respondWith(
-      caches.match(req).then(function (hit) {
-        var net = fetch(req).then(function (res) {
-          if (res && res.ok) {
-            var copy = res.clone();
-            caches.open(CACHE).then(function (c) { c.put(req, copy); });
-          }
           return res;
-        }).catch(function () { return hit || caches.match('./') || Response.error(); });
-        return hit || net;
+        }
+        if (res && !isNav && !isData) return res;   /* خطایِ واقعیِ سرور را پنهان نکن */
+        return caches.match(req).then(function (hit) {
+          if (hit) return hit;
+          if (isNav) return caches.match('./');
+          return res || Response.error();
+        });
       })
     );
     return;
   }
 
-  /* فایلِ ثابت: اول حافظه */
+  /* فونت و عکس: اول حافظه (نسخه‌دار و تغییرناپذیر) */
   e.respondWith(
     caches.match(req).then(function (hit) {
       if (hit) return hit;
