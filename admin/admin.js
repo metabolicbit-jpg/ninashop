@@ -218,12 +218,41 @@
   }
 
   /* ---------- رندرِ فهرست‌ها ---------- */
+  var adminCat = '';   /* فیلترِ دسته در تبِ محصولاتِ پنل */
+
+  function allCatNames() {
+    var names = (data.categories || []).map(function (c) { return c.name; });
+    (data.products || []).forEach(function (p) {
+      if (p.category && names.indexOf(p.category) === -1) names.push(p.category);
+    });
+    return names;
+  }
+  function renderAdminCatFilter() {
+    var box = document.getElementById('adminCatFilter');
+    if (!box) return;
+    var names = allCatNames();
+    box.innerHTML = '<button class="cat-chip' + (adminCat === '' ? ' on' : '') + '" data-cat="">همه</button>' +
+      names.map(function (n) {
+        return '<button class="cat-chip' + (adminCat === n ? ' on' : '') + '" data-cat="' + R.esc(n) + '">' + R.esc(n) + '</button>';
+      }).join('');
+  }
+  function renderCatChips() {
+    var box = document.getElementById('catChips');
+    if (!box) return;
+    box.innerHTML = allCatNames().map(function (n) {
+      return '<button class="cat-chip" data-fill="' + R.esc(n) + '" type="button">' + R.esc(n) + '</button>';
+    }).join('') || 'هنوز دسته‌ای نساخته‌ای؛ اسمِ دسته را بنویس.';
+  }
+
   function renderProducts() {
     var box = document.getElementById('productList');
     if (!box) return;
-    box.innerHTML = data.products.map(function (p, i) {
+    var list = data.products;
+    if (adminCat) list = list.filter(function (p) { return p.category === adminCat; });
+    box.innerHTML = list.map(function (p) {
+      var i = data.products.indexOf(p);
       var swatchInner = p.image
-        ? '<img src="' + R.esc(p.image) + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">'
+        ? '<img src="' + R.esc(R.imgSrc(p)) + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">'
         : R.icon(p.icon || 'heart');
       return '<div class="admin-item">' +
         '<span class="swatch" style="background:linear-gradient(135deg,' +
@@ -238,7 +267,7 @@
           '<button class="mini-btn danger" data-del="' + i + '" aria-label="حذف">' + R.icon('trash') + '</button>' +
         '</div>' +
       '</div>';
-    }).join('') || '<p class="hint">هنوز محصولی نیست.</p>';
+    }).join('') || '<p class="hint">در این دسته محصولی نیست.</p>';
   }
 
   function renderTestimonials() {
@@ -269,6 +298,10 @@
     set('f-price', p.price ? R.faG(p.price) : ''); set('f-oldPrice', p.oldPrice ? R.faG(p.oldPrice) : '۰');
     set('f-desc', p.desc); set('f-fabric', p.fabric); set('f-art', p.art || '');
     set('f-cover1', (p.cover && p.cover[0]) || ''); set('f-cover2', (p.cover && p.cover[1]) || '');
+    var c1 = document.getElementById('f-cover1c'), c2 = document.getElementById('f-cover2c');
+    if (c1) c1.value = (p.cover && p.cover[0]) || '#f8c8d8';
+    if (c2) c2.value = (p.cover && p.cover[1]) || '#fde8ef';
+    renderCatChips();
     set('f-sizes', (p.sizes || []).join(', '));
     set('f-status', p.status || 'active'); set('f-featured', p.featured ? '1' : '0');
     set('f-stock', p.stock ? R.faG(p.stock) : '');
@@ -322,7 +355,7 @@
     if (editing.idx === null) data.products.push(p);
     else data.products[editing.idx] = p;
     saveLocal(); markDirty('products');
-    renderProducts();
+    renderProducts(); renderAdminCatFilter();
     document.getElementById('productEditor').style.display = 'none';
     editing = null;
     msg('pubMsg', 'محصول ذخیره شد. برای دیدن در سایت، دکمهٔ «انتشار» را بزن.', true);
@@ -462,10 +495,8 @@
       '</div>';
     }).join('') || '<p class="hint">هنوز دسته‌ای نیست.</p>';
     /* پیشنهادِ نامِ دسته در فرمِ محصول */
-    var dl = document.getElementById('catSuggestions');
-    if (dl) dl.innerHTML = (data.categories || []).map(function (c) {
-      return '<option value="' + R.esc(c.name) + '"></option>';
-    }).join('');
+    renderAdminCatFilter();
+    renderCatChips();
   }
 
   function openCEditor(idx) {
@@ -779,10 +810,14 @@
   function showPanel() {
     document.getElementById('loginBox').style.display = 'none';
     document.getElementById('panelBox').style.display = '';
+    var bn = document.querySelector('.bottom-nav');
+    if (bn) bn.style.display = '';
   }
   function showLogin() {
     document.getElementById('loginBox').style.display = '';
     document.getElementById('panelBox').style.display = 'none';
+    var bn = document.querySelector('.bottom-nav');
+    if (bn) bn.style.display = 'none';
   }
 
   /* ---------- اتصالِ رویدادها ---------- */
@@ -823,6 +858,32 @@
 
     document.getElementById('addProduct').addEventListener('click', function () { openEditor(null); });
     document.getElementById('saveProduct').addEventListener('click', saveProduct);
+    /* فیلترِ دسته در تبِ محصولات */
+    document.getElementById('adminCatFilter').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-cat]');
+      if (!b) return;
+      adminCat = b.dataset.cat;
+      renderAdminCatFilter(); renderProducts();
+    });
+    /* چیپ‌هایِ دسته در فرمِ محصول */
+    document.getElementById('catChips').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-fill]');
+      if (!b) return;
+      var inp = document.getElementById('f-category');
+      if (inp) { inp.value = b.dataset.fill; inp.focus(); }
+    });
+    /* پالتِ رنگِ کاور: هم‌گامِ دوسویه با فیلدِ متنی */
+    function bindColorPair(cId, tId) {
+      var c = document.getElementById(cId), t = document.getElementById(tId);
+      if (!c || !t) return;
+      c.addEventListener('input', function () { t.value = c.value; });
+      t.addEventListener('input', function () {
+        var v = t.value.trim();
+        if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)) c.value = v;
+      });
+    }
+    bindColorPair('f-cover1c', 'f-cover1');
+    bindColorPair('f-cover2c', 'f-cover2');
     /* عکس */
     document.getElementById('f-image').addEventListener('change', function (e) {
       var f = e.target.files[0];

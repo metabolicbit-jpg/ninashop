@@ -22,7 +22,8 @@ with sync_playwright() as p:
     check('خانه: عنوان درست است', 'نینا شاپ' in pg.title())
     check('خانه: h1 هست', pg.locator('h1').count() == 1)
     cards = pg.locator('#productGrid .card').count()
-    check('خانه: ۹ کارتِ محصول رندر شد', cards == 9, f'دریافتی: {cards}')
+    N = len(__import__('json').load(open('data/products.json')))
+    check('خانه: کارت‌هایِ محصول رندر شد', cards == N, f'دریافتی: {cards}')
     slides = pg.locator('#tTrack .slide').count()
     check('خانه: ۳ اسلایدِ نظر', slides == 3, f'دریافتی: {slides}')
     check('خانه: ارقامِ قیمت فارسی‌اند', '۱۸۹٬۰۰۰' in pg.locator('#productGrid').inner_text())
@@ -89,12 +90,13 @@ with sync_playwright() as p:
     # علاقه‌مندی‌ها، موجودیِ محدود، به‌زودی (روی کارت‌ها)
     pg.goto(BASE + '/', wait_until='networkidle')
     pg.wait_for_timeout(500)
-    check('خانه: قلبِ علاقه‌مندی روی همهٔ کارت‌ها', pg.locator('#productGrid .wish-btn').count() == 9,
+    check('خانه: قلبِ علاقه‌مندی روی همهٔ کارت‌ها', pg.locator('#productGrid .wish-btn').count() == N,
           f'دریافتی: {pg.locator("#productGrid .wish-btn").count()}')
     check('خانه: لینکِ علاقه‌مندی‌ها در سرصفحه', pg.locator('.header-actions a[href="wishlist.html"]').count() == 1)
     pg.locator('#productGrid .wish-btn').first.click()
     check('خانه: قلب با کلیک فعال می‌شود', 'active' in pg.locator('#productGrid .wish-btn').first.get_attribute('class'))
-    check('خانه: نشانِ موجودیِ محدود (۲ محصول)', pg.locator('#productGrid .stock-badge').count() == 2,
+    NS = len([p for p in __import__('json').load(open('data/products.json')) if p.get('stock')])
+    check('خانه: نشانِ موجودیِ محدود', pg.locator('#productGrid .stock-badge').count() == NS,
           f'دریافتی: {pg.locator("#productGrid .stock-badge").count()}')
     check('خانه: محصولِ به‌زودی دکمهٔ سفارش ندارد', pg.locator('#productGrid .card-order.soon').count() == 1)
     pg.goto(BASE + '/wishlist.html', wait_until='networkidle')
@@ -114,7 +116,8 @@ with sync_playwright() as p:
     pg.locator('#catFilter .cat-chip[data-cat="لوازم آرایشی"]').click()
     pg.wait_for_timeout(900)
     cos = pg.locator('#productGrid .card').count()
-    check('خانه: فیلترِ آرایشی فقط ۳ کارت می‌گذارد', cos == 3, f'دریافتی: {cos}')
+    NC = len([p for p in __import__('json').load(open('data/products.json')) if p['category'] == 'لوازم آرایشی'])
+    check('خانه: فیلترِ آرایشی فقط کارت‌هایِ آرایشی', cos == NC, f'دریافتی: {cos}')
     # ریشهٔ باگِ قبلی: کارت‌هایِ تازه‌رندرشده باید واقعاً دیده شوند (opacity = 1)
     op = pg.evaluate("getComputedStyle(document.querySelector('#productGrid .card')).opacity")
     check('خانه: کارت‌هایِ فیلترشده محو نمی‌مانند', op == '1', f'opacity: {op}')
@@ -122,7 +125,7 @@ with sync_playwright() as p:
     check('خانه: کارتِ رژِ لب رندر شد', 'رژِ لبِ مخملیِ نینا' in pg.locator('#productGrid').inner_text())
     pg.locator('#catFilter .cat-chip[data-cat=""]').click()
     pg.wait_for_timeout(900)
-    check('خانه: «همه» دوباره ۹ کارت می‌آورد', pg.locator('#productGrid .card').count() == 9)
+    check('خانه: «همه» دوباره همهٔ کارت‌ها را می‌آورد', pg.locator('#productGrid .card').count() == N)
     op2 = pg.evaluate("getComputedStyle(document.querySelector('#productGrid .card')).opacity")
     check('خانه: بعد از «همه» هم کارت‌ها دیده می‌شوند', op2 == '1', f'opacity: {op2}')
     # لینکِ دسته‌ها در فوتر
@@ -136,7 +139,7 @@ with sync_playwright() as p:
     pg.wait_for_timeout(600)
     check('دسته: عنوانِ دسته درست است', 'لوازم آرایشی' in pg.locator('#catTitle').inner_text())
     check('دسته: معرفیِ سئویی پر شده', len(pg.locator('#catIntro').inner_text().strip()) > 50)
-    check('دسته: ۳ کارتِ آرایشی', pg.locator('#catGrid .card').count() == 3,
+    check('دسته: کارت‌هایِ آرایشی', pg.locator('#catGrid .card').count() == NC,
           f'دریافتی: {pg.locator("#catGrid .card").count()}')
     check('دسته: مسیرِ راهنما (breadcrumb) هست', 'خانه' in pg.locator('#crumbs').inner_text())
     lds = pg.evaluate("() => Array.from(document.querySelectorAll('script[type=\"application/ld+json\"]')).map(s => s.textContent)")
@@ -151,7 +154,8 @@ with sync_playwright() as p:
     pg.goto(BASE + '/', wait_until='networkidle')
     pg.wait_for_timeout(500)
     arts_cos = pg.locator('#productGrid svg.art').count()
-    check('خانه: گرافیک روی همهٔ ۹ کارت', arts_cos == 9, f'دریافتی: {arts_cos}')
+    NART = len([p for p in __import__('json').load(open('data/products.json')) if not p.get('image')])
+    check('خانه: گرافیک روی کارت‌هایِ بی‌عکس', arts_cos == NART, f'دریافتی: {arts_cos}')
 
     # سایت‌مپ
     pg.goto(BASE + '/sitemap.xml', wait_until='domcontentloaded')
@@ -337,7 +341,7 @@ with sync_playwright() as p:
     a.click('#loginBtn'); a.wait_for_timeout(300)
     check('پنل: بعد از ورود، پنل دیده می‌شود', a.locator('#panelBox').is_visible())
     items = a.locator('#productList .admin-item').count()
-    check('پنل: ۹ محصول در فهرست', items == 9, f'دریافتی: {items}')
+    check('پنل: همهٔ محصولات در فهرست', items == len(__import__('json').load(open('data/products.json'))), f'دریافتی: {items}')
     # ویرایشِ محصولِ اول
     a.click('[data-edit="0"]'); a.wait_for_timeout(200)
     check('پنل: ویرایشگر باز شد', a.locator('#productEditor').is_visible())
@@ -370,7 +374,7 @@ with sync_playwright() as p:
     a.fill('#c-name', 'کرمِ ضدِ آفتاب'); a.fill('#c-intro', 'یک معرفیِ آزمایشی برایِ دستهٔ تازه.')
     a.click('#saveCategory'); a.wait_for_timeout(200)
     check('پنل: دستهٔ تازه ذخیره شد', a.locator('#catList .admin-item').count() == 5)
-    check('پنل: پیشنهادِ دسته در فرمِ محصول هست', a.locator('#catSuggestions option').count() == 5)
+    check('پنل: چیپ‌هایِ دسته در فرمِ محصول هست', a.locator('#catChips .cat-chip').count() == 5)
     a.on('dialog', lambda d: d.accept())
     a.click('[data-cdel="4"]'); a.wait_for_timeout(300)
     check('پنل: حذفِ دسته با تأیید انجام شد', a.locator('#catList .admin-item').count() == 4)

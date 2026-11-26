@@ -908,3 +908,12 @@ html[data-theme='night'] .log-item.err { background: #3a2222; }
 .log-item .log-body { flex: 1; min-width: 0; user-select: text; }
 .log-item .log-date { font-weight: 700; }
 .log-item .mini-btn { flex-shrink: 0; }
+
+/* ---------- پنل: انتخابِ رنگِ کاور با پالت ---------- */
+.color-pick { display: flex; gap: 8px; align-items: center; }
+.color-pick input[type='color'] {
+  width: 42px; height: 42px; flex-shrink: 0;
+  padding: 3px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); cursor: pointer;
+}
+.color-pick input[type='text'], .color-pick input:not([type='color']) { flex: 1; min-width: 0; }
