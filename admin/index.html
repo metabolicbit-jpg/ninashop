@@ -232,6 +232,22 @@
           <div id="dirtyList" class="hint" style="margin-bottom:12px"></div>
           <button class="btn btn-primary" id="publishBtn"><i data-ic="upload"></i> انتشارِ تغییرها</button>
           <div class="msg" id="pubMsg"></div>
+          <div id="pubResult" class="pub-result" style="display:none">
+            <div class="pub-result-head">
+              <b id="pubResultTitle"></b>
+              <span style="display:flex;gap:6px">
+                <button class="mini-btn" id="pubCopy" type="button" aria-label="کپیِ گزارش" title="کپیِ گزارش"><i data-ic="save"></i></button>
+                <button class="mini-btn" id="pubClose" type="button" aria-label="بستن" title="بستن"><i data-ic="xmark"></i></button>
+              </span>
+            </div>
+            <pre id="pubResultBody" dir="rtl"></pre>
+          </div>
+        </div>
+        <div class="panel-card">
+          <h3><i data-ic="rotate"></i> گزارشِ ارسال</h3>
+          <p class="hint" style="margin-bottom:12px">تاریخِ هر انتشار (شمسی)، چه چیزی فرستاده شده و نتیجه‌اش. اگر خطا خوردی، متنِ گزارش را با دکمهٔ کپی بردار و برایم بفرست.</p>
+          <div id="pubLog"></div>
+          <button class="btn btn-ghost btn-sm" id="clearLog" style="margin-top:10px"><i data-ic="trash"></i> پاک کردنِ همه</button>
         </div>
         <div class="panel-card">
           <h3><i data-ic="save"></i> پشتیبان</h3>
@@ -254,6 +270,15 @@
     </div>
   </main>
 
+  <nav class="bottom-nav" aria-label="ناوبریِ پنل">
+    <a data-pane="products"><i data-ic="bag"></i><span>کالا</span></a>
+    <a data-pane="site"><i data-ic="pen"></i><span>سایت</span></a>
+    <a data-pane="testimonials"><i data-ic="star"></i><span>نظرات</span></a>
+    <a data-pane="posts"><i data-ic="message"></i><span>وبلاگ</span></a>
+    <a data-pane="faq"><i data-ic="info"></i><span>پرسش</span></a>
+    <a data-pane="categories"><i data-ic="gem"></i><span>دسته</span></a>
+    <a data-pane="publish"><i data-ic="upload"></i><span>انتشار</span></a>
+  </nav>
   <script src="../js/icons.js" defer></script>
   <script src="admin.js" defer></script>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>

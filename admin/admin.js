@@ -283,7 +283,7 @@
     if (p.image && !p.image.startsWith('data:')) {
       /* عکسِ منتشرشده: پیش‌نمایش از مسیرِ سایت */
       var img = document.getElementById('f-imgPreview');
-      img.src = p.image;
+      img.src = R.imgSrc(p);
       img.style.display = ''; document.getElementById('imgPlaceholder').style.display = 'none';
       document.getElementById('removeImg').style.display = '';
     }
@@ -317,6 +317,7 @@
       var imgPath = 'assets/products/' + p.id + '.jpg';
       pendingUploads.push({ path: imgPath, base64: pendingImage });
       p.image = imgPath;
+      p.imgVer = Date.now();   /* کشِ عکسِ قدیمی در سایت دور زده می‌شود */
     }
     if (editing.idx === null) data.products.push(p);
     else data.products[editing.idx] = p;
@@ -628,6 +629,94 @@
   }
 
   /* ---------- انتشار ---------- */
+  var K_LOG = 'nina_v1_publog';
+
+  /* تاریخِ شمسی + ساعت، برایِ گزارشِ ارسال */
+  function jalaliStr(ts) {
+    var d = new Date(ts);
+    var gy = d.getFullYear(), gm = d.getMonth() + 1, gd = d.getDate();
+    var g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+    var jy = (gy <= 1600) ? 0 : 979;
+    gy -= (gy <= 1600) ? 621 : 1600;
+    var gy2 = (gm > 2) ? (gy + 1) : gy;
+    var days = (365 * gy) + parseInt((gy2 + 3) / 4, 10) - parseInt((gy2 + 99) / 100, 10) +
+      parseInt((gy2 + 399) / 400, 10) - 80 + gd + g_d_m[gm - 1];
+    jy += 33 * parseInt(days / 12053, 10);
+    days %= 12053;
+    jy += 4 * parseInt(days / 1461, 10);
+    days %= 1461;
+    if (days > 365) { jy += parseInt((days - 1) / 365, 10); days = (days - 1) % 365; }
+    var jm = (days < 186) ? 1 + parseInt(days / 31, 10) : 7 + parseInt((days - 186) / 30, 10);
+    var jd = 1 + ((days < 186) ? (days % 31) : ((days - 186) % 30));
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    return R.fa(jy + '/' + p(jm) + '/' + p(jd)) + ' — ' + R.fa(p(d.getHours()) + ':' + p(d.getMinutes()));
+  }
+
+  /* خطایِ گیت‌هاب به زبانِ آدمیزاد */
+  function ghErrText(e) {
+    var m = (e && e.message) || String(e);
+    if (/401/.test(m)) return 'توکنِ گیت‌هاب نامعتبر یا باطل شده (401). توکنِ تازه بساز و در تبِ ورود وارد کن.';
+    if (/403/.test(m) && /rate/i.test(m)) return 'محدودیتِ موقتِ گیت‌هاب (403 rate limit). چند دقیقه صبر کن و دوباره «انتشار» را بزن.';
+    if (/403/.test(m)) return 'دسترسی رد شد (403). توکن باید مجوزِ «Contents: Read and write» روی همین مخزن داشته باشد.';
+    if (/404/.test(m)) return 'مخزن پیدا نشد (404). نامِ کاربری و نامِ مخزن را در تبِ ورود چک کن.';
+    if (/409|422/.test(m)) return 'تداخلِ نسخهٔ فایل (409/422). دوباره «انتشار» را بزن؛ معمولاً خودکار حل می‌شود.';
+    if (/fetch|network|Network/i.test(m)) return 'شبکه قطع بود یا گیت‌هاب پاسخ نداد. اینترنت را چک کن و دوباره «انتشار» را بزن.';
+    return m;
+  }
+
+  /* تلاشِ مجددِ خودکار: ۳ بار، با فاصله — دیگر لازم نیست چند بار دستی بزنی */
+  function withRetry(fn, tries) {
+    tries = tries || 3;
+    return fn().catch(function (e) {
+      if (tries <= 1) throw e;
+      return new Promise(function (res) { setTimeout(res, 1800); })
+        .then(function () { return withRetry(fn, tries - 1); });
+    });
+  }
+
+  /* اجرایِ پشت‌سرِ هم (نه موازی) — گیت‌هاب با درخواستِ همزمانِ زیاد اذیت می‌کند */
+  function runSeq(items, fn) {
+    return items.reduce(function (chain, it) {
+      return chain.then(function () { return fn(it); });
+    }, Promise.resolve());
+  }
+
+  /* جعبهٔ نتیجه: تا وقتی خودت نبندی، باز می‌ماند؛ متنش قابلِ کپی است */
+  function showResult(ok, title, lines) {
+    var box = document.getElementById('pubResult');
+    if (!box) return;
+    document.getElementById('pubResultTitle').textContent = title;
+    document.getElementById('pubResultBody').textContent = lines.join('\n');
+    box.className = 'pub-result ' + (ok ? 'ok' : 'err');
+    box.style.display = '';
+    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function addLog(ok, summary, errors) {
+    var log = [];
+    try { log = JSON.parse(localStorage.getItem(K_LOG)) || []; } catch (e) {}
+    log.unshift({ t: Date.now(), ok: ok, s: summary, e: errors || [] });
+    if (log.length > 30) log.length = 30;
+    try { localStorage.setItem(K_LOG, JSON.stringify(log)); } catch (e) {}
+    renderLog();
+  }
+  function renderLog() {
+    var box = document.getElementById('pubLog');
+    if (!box) return;
+    var log = [];
+    try { log = JSON.parse(localStorage.getItem(K_LOG)) || []; } catch (e) {}
+    box.innerHTML = log.map(function (l, i) {
+      return '<div class="log-item ' + (l.ok ? 'ok' : 'err') + '">' +
+        '<div class="log-body">' +
+          '<div class="log-date">' + (l.ok ? '✅ ' : '❌ ') + jalaliStr(l.t) + '</div>' +
+          '<div>' + R.esc(l.s) + '</div>' +
+          (l.e && l.e.length ? '<div style="color:#c74e4e">' + l.e.map(R.esc).join('<br>') + '</div>' : '') +
+        '</div>' +
+        '<button class="mini-btn danger" data-logdel="' + i + '" aria-label="حذفِ این گزارش">' + R.icon('trash') + '</button>' +
+      '</div>';
+    }).join('') || '<p class="hint">هنوز ارسالی ثبت نشده.</p>';
+  }
+
   function publish() {
     /* sitemap خودکار: هرگاه محصول، مقاله یا دامنه عوض شد، با انتشار تازه می‌شود */
     if (dirty[FILES.products] || dirty[FILES.posts] || dirty[FILES.site]) {
@@ -638,38 +727,50 @@
     begin.then(function () {
       var paths = Object.keys(dirty);
       var uploads = pendingUploads.slice();
-    if (!paths.length && !uploads.length) { msg('pubMsg', 'تغییری برای انتشار نیست.', true); return; }
-    var total = paths.length + uploads.length;
-    var btn = document.getElementById('publishBtn');
-    btn.disabled = true;
-    var done = 0, fail = null;
-    function step() {
-      done++;
-      if (done === total) {
-        btn.disabled = false;
-        saveLocal(); renderDirty();
-        if (fail) msg('pubMsg', 'انتشار ناقص ماند: ' + fail, false);
-        else msg('pubMsg', '✨ منتشر شد! یک دقیقه بعد سایتِ تازه را در تبِ سایت ببین.', true);
+      if (!paths.length && !uploads.length) { msg('pubMsg', 'تغییری برای انتشار نیست.', true); return; }
+      var btn = document.getElementById('publishBtn');
+      btn.disabled = true;
+      msg('pubMsg', 'در حالِ انتشار… (' + R.fa(paths.length + uploads.length) + ' فایل)', true);
+      var okItems = [], errItems = [];
+
+      function sendFile(path) {
+        var key = Object.keys(FILES).filter(function (k) { return FILES[k] === path; })[0];
+        var text = key === 'site' ? data.site : data[key];
+        var body = key === 'sitemap' ? String(text) : JSON.stringify(text, null, 2) + '\n';
+        return withRetry(function () { return putFile(path, body); })
+          .then(function () { okItems.push(path); delete dirty[path]; })
+          .catch(function (e) { errItems.push(path + ' ← ' + ghErrText(e)); });
       }
-    }
-    paths.forEach(function (path) {
-      var key = Object.keys(FILES).filter(function (k) { return FILES[k] === path; })[0];
-      var text = key === 'site' ? data.site : data[key];
-      var body = key === 'sitemap' ? String(text) : JSON.stringify(text, null, 2) + '\n';
-      putFile(path, body)
-        .then(function () { delete dirty[path]; })
-        .catch(function (e) { fail = e.message; })
-        .then(step);
-    });
-    uploads.forEach(function (u) {
-      putFileB64(u.path, u.base64)
+      function sendUpload(u) {
+        return withRetry(function () { return putFileB64(u.path, u.base64); })
+          .then(function () {
+            okItems.push(u.path);
+            var i = pendingUploads.indexOf(u);
+            if (i > -1) pendingUploads.splice(i, 1);
+          })
+          .catch(function (e) { errItems.push(u.path + ' ← ' + ghErrText(e)); });
+      }
+
+      runSeq(paths, sendFile)
+        .then(function () { return runSeq(uploads, sendUpload); })
         .then(function () {
-          var i = pendingUploads.indexOf(u);
-          if (i > -1) pendingUploads.splice(i, 1);
-        })
-        .catch(function (e) { fail = 'آپلودِ عکس: ' + e.message; })
-        .then(step);
-    });
+          btn.disabled = false;
+          saveLocal(); renderDirty();
+          var okMsg = okItems.length
+            ? R.fa(okItems.length) + ' فایل منتشر شد: ' + okItems.join('، ')
+            : 'هیچ فایلی منتشر نشد.';
+          if (!errItems.length) {
+            addLog(true, okMsg, []);
+            showResult(true, '✨ انتشار کامل شد', [okMsg, 'سایتِ تازه را با یک رفرش ببین.']);
+            msg('pubMsg', '✨ منتشر شد!', true);
+          } else {
+            addLog(false,
+              R.fa(okItems.length) + ' فایل منتشر شد، ' + R.fa(errItems.length) + ' مورد خطا خورد.',
+              errItems);
+            showResult(false, '⚠️ انتشار ناقص ماند', errItems.concat(['', 'متنِ بالا با دکمهٔ کپی برداشته می‌شود. بعد از رفعِ مشکل، دوباره «انتشار» را بزن؛ فقط فایل‌هایِ ناتمام دوباره فرستاده می‌شوند.']));
+            msg('pubMsg', 'انتشار ناقص ماند — جزئیات در جعبهٔ زیر.', false);
+          }
+        });
     });
   }
 
@@ -699,13 +800,25 @@
       showLogin();
     });
 
-    document.querySelectorAll('.admin-tab').forEach(function (tab) {
-      tab.addEventListener('click', function () {
-        document.querySelectorAll('.admin-tab').forEach(function (t) { t.classList.remove('active'); });
-        document.querySelectorAll('.admin-pane').forEach(function (p) { p.classList.remove('active'); });
-        tab.classList.add('active');
-        document.getElementById('pane-' + tab.dataset.pane).classList.add('active');
+    function activatePane(name) {
+      if (!name || !document.getElementById('pane-' + name)) return;
+      document.querySelectorAll('.admin-tab').forEach(function (t) {
+        t.classList.toggle('active', t.dataset.pane === name);
       });
+      document.querySelectorAll('.admin-pane').forEach(function (p) {
+        p.classList.toggle('active', p.id === 'pane-' + name);
+      });
+      var bn = document.querySelectorAll('.bottom-nav a');
+      bn.forEach(function (a) { a.classList.toggle('active', a.dataset.pane === name); });
+      document.getElementById('pane-' + name).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    document.querySelectorAll('.admin-tab').forEach(function (tab) {
+      tab.addEventListener('click', function () { activatePane(tab.dataset.pane); });
+    });
+    var bnav = document.querySelector('.bottom-nav');
+    if (bnav) bnav.addEventListener('click', function (e) {
+      var a = e.target.closest('a');
+      if (a) { e.preventDefault(); activatePane(a.dataset.pane); }
     });
 
     document.getElementById('addProduct').addEventListener('click', function () { openEditor(null); });
@@ -813,6 +926,36 @@
       }
     });
     document.getElementById('publishBtn').addEventListener('click', publish);
+    document.getElementById('pubClose').addEventListener('click', function () {
+      document.getElementById('pubResult').style.display = 'none';
+    });
+    document.getElementById('pubCopy').addEventListener('click', function () {
+      var text = document.getElementById('pubResultBody').textContent;
+      var done = function () { toast('گزارش کپی شد.', true); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallback(); });
+      } else fallback();
+      function fallback() {
+        var ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove(); done();
+      }
+    });
+    document.getElementById('clearLog').addEventListener('click', function () {
+      if (confirm('همهٔ گزارشِ ارسال پاک شود؟')) {
+        try { localStorage.removeItem(K_LOG); } catch (e) {}
+        renderLog();
+      }
+    });
+    document.getElementById('pubLog').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-logdel]');
+      if (!b) return;
+      var log = [];
+      try { log = JSON.parse(localStorage.getItem(K_LOG)) || []; } catch (err) {}
+      log.splice(Number(b.dataset.logdel), 1);
+      try { localStorage.setItem(K_LOG, JSON.stringify(log)); } catch (err) {}
+      renderLog();
+    });
     document.getElementById('exportBtn').addEventListener('click', exportJSON);
     document.getElementById('importFile').addEventListener('change', function (e) {
       if (e.target.files[0]) importJSON(e.target.files[0]);
@@ -848,6 +991,7 @@
       fillSiteForm(); renderProducts(); renderTestimonials(); renderPosts(); renderFaq(); renderCategories();
     }
     renderDirty();
+    renderLog();
     bind();
     if (loggedIn()) showPanel(); else showLogin();
   }

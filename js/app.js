@@ -26,7 +26,7 @@
   function coverInner(p, big) {
     if (p.image) {
       return '<div class="cover with-img" style="' + coverStyle(p) + '">' +
-        '<img src="' + R.esc(p.image) + '" alt="' + R.esc(p.name) + '" loading="lazy">' +
+        '<img src="' + R.esc(R.imgSrc(p)) + '" alt="' + R.esc(p.name) + '" loading="lazy">' +
         '</div>';
     }
     if (p.art && R.ART && R.ART[p.art]) {

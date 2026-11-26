@@ -66,7 +66,7 @@
     if (ogu) ogu.setAttribute('content', (site.domain || '') .replace(/\/$/, '') + '/product.html?id=' + encodeURIComponent(p.id));
     var ogimg = document.querySelector('meta[property="og:image"]');
     if (ogimg) ogimg.setAttribute('content', (site.domain || '').replace(/\/$/, '') +
-      (p.image ? '/assets/og/' + encodeURIComponent(p.id) + '.jpg' : '/assets/og.jpg'));
+      (p.image ? '/assets/og/' + encodeURIComponent(p.id) + '.jpg' + (p.imgVer ? '?v=' + p.imgVer : '') : '/assets/og.jpg'));
 
     /* برداشتِ نان */
     var crumbs = document.getElementById('crumbs');
@@ -87,7 +87,7 @@
     var page = document.getElementById('productPage');
     var hasArt = p.art && R.ART && R.ART[p.art];
     var cover = p.image
-      ? '<div class="cover with-img" style="' + coverStyle(p) + '"><img src="' + R.esc(p.image) + '" alt="' + R.esc(p.name) + '"></div>'
+      ? '<div class="cover with-img" style="' + coverStyle(p) + '"><img src="' + R.esc(R.imgSrc(p)) + '" alt="' + R.esc(p.name) + '"></div>'
       : '<div class="cover' + (hasArt ? ' with-art' : '') + '" style="' + coverStyle(p) + '">' +
         (hasArt ? R.art(p.art) : R.icon(p.icon || 'heart')) + '</div>';
     var soon = p.status === 'soon';
@@ -167,7 +167,7 @@
         return '<article class="card">' +
           '<a href="product.html?id=' + encodeURIComponent(x.id) + '" aria-label="' + R.esc(x.name) + '">' +
             (x.image
-              ? '<div class="cover with-img" style="' + coverStyle(x) + '"><img src="' + R.esc(x.image) + '" alt="' + R.esc(x.name) + '" loading="lazy"></div>'
+              ? '<div class="cover with-img" style="' + coverStyle(x) + '"><img src="' + R.esc(R.imgSrc(x)) + '" alt="' + R.esc(x.name) + '" loading="lazy"></div>'
               : '<div class="cover' + ((x.art && R.ART && R.ART[x.art]) ? ' with-art' : '') + '" style="' + coverStyle(x) + '">' +
                 ((x.art && R.ART && R.ART[x.art]) ? R.art(x.art) : R.icon(x.icon || 'heart')) + '</div>') +
           '</a>' +

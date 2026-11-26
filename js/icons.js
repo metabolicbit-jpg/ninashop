@@ -224,6 +224,12 @@
       'stroke-width="5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + a.body + '</svg>';
   }
 
+  /* آدرسِ عکس با نسخه: بعد از آپلودِ عکسِ تازه، کشِ قدیمی دور زده می‌شود */
+  function imgSrc(p) {
+    if (!p || !p.image) return '';
+    return p.image + (p.imgVer ? '?v=' + p.imgVer : '');
+  }
+
   /* خواندنِ امنِ JSON از url؛ خطا را برمی‌گرداند نه اینکه قورت بدهد */
   function fetchJSON(url) {
     return fetch(url).then(function (r) {
@@ -301,7 +307,7 @@
     ICONS: ICONS, icon: icon, paintIcons: paintIcons,
     ART: ART, art: art,
     fa: fa, faG: faG, faPrice: faPrice, normDigits: normDigits,
-    esc: esc, rtlFix: rtlFix,
+    esc: esc, rtlFix: rtlFix, imgSrc: imgSrc,
     getTheme: getTheme, setTheme: setTheme,
     getAccent: getAccent, setAccent: setAccent,
     initTheme: initTheme, bindThemeToggle: bindThemeToggle,
