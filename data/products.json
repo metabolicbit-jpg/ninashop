@@ -365,5 +365,28 @@
     "sizes": [],
     "stock": 4,
     "imgVer": 1795688564157
+  },
+  {
+    "id": "p1795692036622",
+    "cover": [
+      "#f8c8d8",
+      "#fde8ef"
+    ],
+    "icon": "heart",
+    "status": "active",
+    "featured": 0,
+    "oldPrice": 0,
+    "colors": [],
+    "image": "assets/products/p1795692036622.jpg",
+    "name": "لاک جیغ بنفش",
+    "category": "لوازم آرایشی",
+    "badge": "جدید",
+    "price": 175000,
+    "desc": "لاک جیغ بنفش فانتزی",
+    "fabric": "",
+    "art": "",
+    "sizes": [],
+    "stock": 6,
+    "imgVer": 1795692184799
   }
 ]
