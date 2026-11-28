@@ -61,8 +61,9 @@
         '<div class="field"><label for="f-name">نام و نامِ خانوادگی *</label><input id="f-name" type="text" autocomplete="name"></div>' +
         '<div class="field-row">' +
           '<div class="field"><label for="f-phone">شمارهٔ موبایل *</label><input id="f-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="۰۹…"></div>' +
-          '<div class="field"><label for="f-city">شهر *</label><input id="f-city" type="text" autocomplete="address-level2"></div>' +
+          '<div class="field"><label for="f-prov">استان *</label><input id="f-prov" type="text" autocomplete="off" placeholder="بنویس یا از فهرست انتخاب کن"><div class="geo-dd" id="dd-prov"></div></div>' +
         '</div>' +
+        '<div class="field"><label for="f-city">شهر *</label><input id="f-city" type="text" autocomplete="off" placeholder="اول استان را انتخاب کن" disabled><div class="geo-dd" id="dd-city"></div></div>' +
         '<div class="field"><label for="f-address">نشانیِ پستیِ کامل *</label><textarea id="f-address" rows="2"></textarea></div>' +
         '<div class="field"><label for="f-note">یادداشت (اختیاری)</label><input id="f-note" type="text" placeholder="مثلاً: رنگِ … اگر بود"></div>' +
         '<button type="button" class="btn btn-primary btn-block" id="submitOrder">' + R.icon('sparkles') + ' ثبتِ سفارش و رفتن به پرداخت</button>' +
@@ -71,7 +72,75 @@
       '</div>';
 
     bindCartActions();
+    bindGeo();
     document.getElementById('submitOrder').addEventListener('click', submit);
+  }
+
+  /* ---------- استان و شهر (انتخابِ زنجیره‌ای با جست‌وجو) ---------- */
+  var selProv = '', selCity = '';
+
+  function normFa(s) {
+    return String(s || '')
+      .replace(/\u200c/g, ' ')
+      .replace(/[يى]/g, 'ی').replace(/ك/g, 'ک')
+      .replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه')
+      .replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+
+  function geoCombo(inpId, ddId, getOpts, onPick) {
+    var inp = document.getElementById(inpId), dd = document.getElementById(ddId);
+    if (!inp || !dd) return;
+    var items = [];
+    function close() { dd.classList.remove('open'); dd.innerHTML = ''; items = []; }
+    function paint(list) {
+      items = list;
+      if (!list.length) {
+        dd.innerHTML = '<div class="geo-empty">چیزی پیدا نشد</div>';
+      } else {
+        dd.innerHTML = list.map(function (o, i) {
+          return '<button type="button" class="geo-item" data-i="' + i + '">' + esc(o.label) + '</button>';
+        }).join('');
+      }
+      dd.classList.add('open');
+      dd.querySelectorAll('.geo-item').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var o = items[Number(b.getAttribute('data-i'))];
+          inp.value = o.label;
+          close();
+          onPick(o);
+        });
+      });
+    }
+    function open() {
+      var q = normFa(inp.value);
+      var all = getOpts() || [];
+      paint(q ? all.filter(function (o) { return normFa(o.label).indexOf(q) !== -1; }) : all);
+    }
+    inp.addEventListener('focus', open);
+    inp.addEventListener('input', open);
+    inp.addEventListener('blur', function () { setTimeout(close, 180); });
+  }
+
+  function bindGeo() {
+    var prov = document.getElementById('f-prov'), city = document.getElementById('f-city');
+    if (!prov || !city || !window.NinaGeo) return;
+    prov.value = selProv; city.value = selCity;
+    city.disabled = !selProv;
+    city.placeholder = selProv ? 'بنویس یا از فهرست انتخاب کن' : 'اول استان را انتخاب کن';
+
+    geoCombo('f-prov', 'dd-prov', function () {
+      return (window.NinaGeo.provinces || []).map(function (p) { return { label: p.name }; });
+    }, function (o) {
+      selProv = o.label; selCity = '';
+      prov.value = selProv; city.value = ''; city.disabled = false;
+      city.placeholder = 'بنویس یا از فهرست انتخاب کن';
+      city.focus();
+    });
+
+    geoCombo('f-city', 'dd-city', function () {
+      var p = (window.NinaGeo.provinces || []).filter(function (x) { return x.name === selProv; })[0];
+      return p ? p.cities.map(function (c) { return { label: c }; }) : [];
+    }, function (o) { selCity = o.label; });
   }
 
   function bindCartActions() {
@@ -99,10 +168,12 @@
     err.style.display = 'none';
 
     var name = val('f-name'), phone = norm(val('f-phone')),
-        city = val('f-city'), address = val('f-address'), note = val('f-note');
+        prov = val('f-prov'), city = val('f-city'),
+        address = val('f-address'), note = val('f-note');
     if (!name) return fail('نام را بنویس.');
     if (!/^0\d{10}$/.test(phone)) return fail('شمارهٔ موبایل را درست بنویس (مثل ۰۹۱۲۳۴۵۶۷۸۹).');
-    if (!city) return fail('شهر را بنویس.');
+    if (!prov) return fail('استان را انتخاب کن.');
+    if (!city) return fail('شهر را انتخاب کن.');
     if (address.length < 10) return fail('نشانیِ پستی را کامل بنویس.');
 
     var lines = Cart.items().map(function (it) {
@@ -126,7 +197,7 @@
       created: Date.now(),
       expiresAt: Date.now() + hours * 3600 * 1000,
       items: lines,
-      buyer: { name: name, phone: phone, city: city, address: address, note: note },
+      buyer: { name: name, phone: phone, province: prov, city: city, address: address, note: note },
       pricing: pr,
       status: 'created'
     };

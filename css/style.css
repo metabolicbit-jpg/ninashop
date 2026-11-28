@@ -1144,3 +1144,45 @@ html[data-theme='night'] .log-item.err { background: #3a2222; }
   .oi-head b { font-size: .95rem; }
   .pay-card .btn-block { font-size: .92rem; padding: 11px 14px; gap: 7px; }
 }
+
+/* ============================================================
+   ۹.۸ انتخابِ استان و شهر (زنجیره‌ای با جست‌وجو) + ۹.۹ رهگیریِ مرسوله
+   ============================================================ */
+.field { position: relative; }
+.geo-dd {
+  position: absolute; top: calc(100% + 4px); right: 0; left: 0; z-index: 40;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  max-height: 224px; overflow-y: auto; display: none;
+  box-shadow: var(--shadow-2);
+}
+.geo-dd.open { display: block; }
+.geo-item {
+  display: block; width: 100%; text-align: right; padding: 10px 13px;
+  background: none; border: 0; border-bottom: 1px solid var(--border);
+  font: inherit; font-size: .92rem; color: var(--text); cursor: pointer;
+}
+.geo-item:last-child { border-bottom: 0; }
+.geo-item:hover { background: var(--surface2); }
+.geo-empty { padding: 11px 13px; color: var(--muted); font-size: .85rem; }
+input:disabled { opacity: .55; }
+
+.track-box {
+  border: 1.5px dashed var(--accent); border-radius: 14px;
+  padding: 14px; margin: 14px 0 4px;
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+.track-head {
+  display: flex; align-items: center; gap: 7px;
+  font-weight: 700; font-size: .98rem; margin-bottom: 9px; color: var(--text);
+}
+.track-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; flex-wrap: wrap; margin-bottom: 10px;
+}
+.track-code { font-size: 1.06rem; letter-spacing: 1px; color: var(--text); }
+.track-box .btn-block { margin-bottom: 8px; }
+.oi-track { direction: ltr; text-align: left; }
+@media (max-width: 480px) {
+  .track-code { font-size: .98rem; }
+  .track-box { padding: 12px; }
+}

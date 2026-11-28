@@ -44,6 +44,18 @@
     }
   }
 
+  /* ---------- باکسِ رهگیریِ مرسولهٔ پستی ---------- */
+  function trackHTML(o) {
+    if (!o.tracking) return '';
+    return '<div class="track-box">' +
+        '<div class="track-head">' + R.icon('box') + ' رهگیریِ مرسولهٔ پستی</div>' +
+        '<div class="track-row"><b class="track-code" dir="ltr">' + esc(o.tracking) + '</b>' +
+          '<button type="button" class="copy-btn" data-copy="' + esc(o.tracking) + '">' + R.icon('copy') + ' کپیِ کد</button></div>' +
+        '<a class="btn btn-primary btn-block" target="_blank" rel="noopener" href="https://www.post.ir/">' + R.icon('truck') + ' پیگیری در سایتِ پست</a>' +
+        '<p class="hint">کد را کپی کن و در سایتِ پست، در کادرِ «رهگیریِ مرسوله» بچسبان تا مسیرِ بسته‌ات را ببینی.</p>' +
+      '</div>';
+  }
+
   /* ---------- شمارشِ معکوس ---------- */
   function countdown(expiresAt, el) {
     function paint() {
@@ -64,11 +76,13 @@
     var cfg = payCfg();
     var st = o.status;
 
-    /* اگر فروشگاه وضعیت را منتشر کرده، همان حرفِ آخر است */
+    /* اگر فروشگاه وضعیت یا کدِ رهگیری را منتشر کرده، همان حرفِ آخر است */
     Pay.fetchRemoteStatus(o.code).then(function (remote) {
-      if (remote && remote.status && remote.status !== o.status) {
-        o.status = remote.status;
+      if (remote && ((remote.status && remote.status !== o.status) ||
+                     (remote.tracking && remote.tracking !== o.tracking))) {
+        if (remote.status) o.status = remote.status;
         o.remoteNote = remote.note || '';
+        if (remote.tracking) o.tracking = remote.tracking;
         Pay.putMyOrder(o);
         renderOrder(o);
         return;
@@ -91,9 +105,13 @@
           '<div class="done-mark">' + R.icon('check') + '</div>' +
           '<h3>سفارشِ ' + esc(o.code) + ' ' + Pay.statusLabel(st) + '</h3>' +
           (o.remoteNote ? '<p class="hint">' + esc(o.remoteNote) + '</p>' : '') +
-          '<p class="hint">جزئیاتِ ارسال از طریقِ واتساپ به دستت می‌رسد. ممنون که به بوتیکِ کوچکِ ما اعتماد کردی 🌸</p>' +
+          (st === 'shipped'
+            ? '<p class="hint">جزئیاتِ ارسال همین‌جاست؛ با کدِ رهگیری، مرسوله‌ات را دنبال کن. ممنون که به بوتیکِ کوچکِ ما اعتماد کردی 🌸</p>'
+            : '<p class="hint">ممنون که به بوتیکِ کوچکِ ما اعتماد کردی 🌸 به‌محضِ ارسال، کدِ رهگیریِ پست همین‌جا می‌آید.</p>') +
+          trackHTML(o) +
           '<a class="btn btn-ghost" href="./">' + R.icon('sparkles') + ' بازگشت به فروشگاه</a>' +
         '</div>' + myOrdersHTML(o.code);
+      bindCopy();
       bindMyOrders();
       R.paintIcons();
       stopPolling();
@@ -152,6 +170,7 @@
           '<li>اسکرین‌شاتِ رسید را نگه دار.</li>' +
           '<li>دکمهٔ زیر را بزن و پیامِ آماده را بفرست؛ رسید را هم همان‌جا بفرست.</li>' +
         '</ol>' +
+        trackHTML(o) +
         '<a class="btn btn-primary btn-block" id="paidBtn" target="_blank" rel="noopener" href="' +
           (wa.indexOf('wa.me') > -1 ? wa + '?text=' + encodeURIComponent(payMsg) : wa) + '">' +
           R.icon('whatsapp') + ' پرداخت کردم — اعلام به فروشگاه</a>' +
@@ -202,8 +221,11 @@
       var o = Pay.myOrderByCode(code);
       if (!o) { stopPolling(); return; }
       Pay.fetchRemoteStatus(code).then(function (remote) {
-        if (remote && remote.status && remote.status !== o.status) {
-          o.status = remote.status; o.remoteNote = remote.note || '';
+        if (remote && ((remote.status && remote.status !== o.status) ||
+                       (remote.tracking && remote.tracking !== o.tracking))) {
+          if (remote.status) o.status = remote.status;
+          o.remoteNote = remote.note || '';
+          if (remote.tracking) o.tracking = remote.tracking;
           Pay.putMyOrder(o); renderOrder(o);
         }
       });

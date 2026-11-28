@@ -691,6 +691,7 @@
       pricing: o.pricing,
       status: 'sent',
       note: '',
+      tracking: '',
       stockDone: false,
       updated: Date.now()
     });
@@ -709,9 +710,11 @@
     if (!o) return;
     var sel = document.getElementById('st-' + code);
     var note = document.getElementById('nt-' + code);
+    var tk = document.getElementById('tk-' + code);
     var st = sel ? sel.value : o.status;
     o.status = st;
     o.note = note ? note.value.trim() : o.note;
+    o.tracking = tk ? tk.value.trim() : (o.tracking || '');
     o.updated = Date.now();
 
     /* کسرِ موجودی: فقط یک‌بار، در گذرِ سفارش به «تأیید شد» یا «ارسال شد» */
@@ -758,10 +761,14 @@
           '<br><b>نشانی:</b> ' + R.esc(((p.city || '') + '، ' + (p.address || '')).replace(/^، /, '')) + '</div>' : '') +
         '<div class="oi-actions">' +
           '<select id="st-' + R.esc(o.code) + '">' + opts + '</select>' +
-          '<input id="nt-' + R.esc(o.code) + '" placeholder="یادداشت (مثل کدِ رهگیریِ پست)">' +
+          '<input id="nt-' + R.esc(o.code) + '" placeholder="یادداشت برایِ مشتری (اختیاری)">' +
           '<button class="btn btn-primary btn-sm" data-apply="' + R.esc(o.code) + '">اعمال</button>' +
         '</div>' +
+        '<div class="oi-actions">' +
+          '<input id="tk-' + R.esc(o.code) + '" class="oi-track" placeholder="کدِ رهگیریِ مرسولهٔ پست (اختیاری)" value="' + R.esc(o.tracking || '') + '">' +
+        '</div>' +
         (o.note ? '<p class="hint">یادداشتِ فعلی: ' + R.esc(o.note) + '</p>' : '') +
+        (o.tracking ? '<p class="hint">رهگیریِ فعلی: ' + R.esc(o.tracking) + '</p>' : '') +
       '</div>';
     }).join('');
     box.querySelectorAll('[data-apply]').forEach(function (b) {
@@ -780,7 +787,7 @@
     return (data.orders || []).map(function (o) {
       return {
         path: statusFilePath(o.code),
-        text: JSON.stringify({ code: o.code, status: o.status, note: o.note || '', updated: o.updated || o.created }, null, 2) + '\n'
+        text: JSON.stringify({ code: o.code, status: o.status, note: o.note || '', tracking: o.tracking || '', updated: o.updated || o.created }, null, 2) + '\n'
       };
     });
   }
