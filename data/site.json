@@ -14,12 +14,12 @@
   "payments": {
     "cardToCard": {
       "enabled": true,
-      "cardNumber": "",
-      "cardHolder": "",
-      "bank": "",
+      "cardNumber": "6385698574123236",
+      "cardHolder": "نینا",
+      "bank": "بانک نینا",
       "expireHours": 6,
       "shippingFee": 0,
-      "note": ""
+      "note": "ساعت پاسخگویی 8 تا 9 شب"
     }
   }
 }
