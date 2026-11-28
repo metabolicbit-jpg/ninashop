@@ -19,9 +19,10 @@
       "offset": 47,
       "payAmount": 429047
     },
-    "status": "paid",
-    "note": "",
+    "status": "shipped",
+    "note": "ارسال شد، مبارک باشه",
     "stockDone": true,
-    "updated": 1795858546135
+    "updated": 1795868304855,
+    "tracking": "8256758586885588"
   }
 ]
