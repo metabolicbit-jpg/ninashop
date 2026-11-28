@@ -8,6 +8,14 @@
   var R = window.Nina, Pay = R.Pay;
   var site = null;
   var timer = null, poll = null;
+  var leavingForWa = null;
+
+  /* ترکِ واقعیِ صفحه (رفتن به واتساپ) → وضعیتِ «پرداخت شد» */
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden || !leavingForWa) return;    var o = Pay.myOrderByCode(leavingForWa);
+    if (o && o.status === 'created') { o.status = 'sent'; Pay.putMyOrder(o); }
+    leavingForWa = null;
+  });
 
   function esc(s) { return R.esc(s); }
 
@@ -111,7 +119,7 @@
     var cardNum = String(cfg.cardNumber || '');
     var hasCard = cardNum.replace(/\D/g, '').length >= 16;
     var grouped = hasCard
-      ? R.fa(cardNum.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1٬'))
+      ? R.fa(cardNum.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 '))
       : '—';
     var payMsg = Pay.paidMessage(o, site);
     var wa = Pay.shopWhatsApp(site);
@@ -119,6 +127,7 @@
     box.innerHTML =
       '<div class="panel-card pay-card">' +
         '<div class="pay-code-row"><span class="pay-code">' + esc(o.code) + '</span>' +
+          '<button type="button" class="copy-btn copy-code-btn" data-copy="' + esc(Pay.encodePayload(o)) + '" title="کدِ کاملِ سفارش برایِ چسباندن در پنل">' + R.icon('copy') + ' کدِ پنل</button>' +
           '<span class="status-chip ' + Pay.statusClass(st) + '">' + Pay.statusLabel(st) + '</span></div>' +
         '<div class="amount-box">' +
           '<span class="amount-label">مبلغِ دقیقِ کارت به کارت</span>' +
@@ -155,7 +164,9 @@
     bindMyOrders();
     var pb = document.getElementById('paidBtn');
     if (pb) pb.addEventListener('click', function () {
-      if (o.status === 'created') { o.status = 'sent'; Pay.putMyOrder(o); }
+      /* وضعیت فقط وقتی عوض می‌شود که صفحه واقعاً ترک شود (رفتن به واتساپ)؛
+         کلیکِ خالی و برگشتن، سفارش را «پرداخت‌شده» نشان نمی‌دهد */
+      leavingForWa = o.code;
     });
     R.paintIcons();
     startPolling(o.code);

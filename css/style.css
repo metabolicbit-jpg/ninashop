@@ -1122,3 +1122,25 @@ html[data-theme='night'] .log-item.err { background: #3a2222; }
 .size-chip.need-pick { border-color: #e8536f; color: #e8536f; animation: nina-shake .5s ease; }
 @keyframes nina-shake { 25% { transform: translateX(3px); } 50% { transform: translateX(-3px); } 75% { transform: translateX(2px); } }
 .btn.added { border-color: #2e9e6b; color: #2e9e6b; }
+
+/* ریزسازیِ موبایل و ضدِ شکستنِ متن (بخشِ ۹ سندِ UI) */
+.pay-code-row { flex-wrap: wrap; }
+.copy-code-btn { margin-inline-start: 0; }
+.pay-code { white-space: nowrap; flex: none; }
+.status-chip { white-space: nowrap; }
+@media (max-width: 480px) {
+  .pay-code { font-size: .92rem; padding: 5px 10px; letter-spacing: .3px; line-height: 1.5; }
+  .pay-code-row { gap: 8px; }
+  .pay-code-row .copy-btn { order: 3; }
+  .pay-code-row .status-chip { order: 2; }
+  .status-chip { font-size: .64rem; padding: 3px 8px; }
+  .copy-btn { font-size: .72rem; padding: 4px 10px; }
+  .amount-row .amount { font-size: 1.28rem; }
+  .card-num { font-size: 1.02rem; letter-spacing: .5px; }
+  .btn { overflow-wrap: anywhere; }
+  .panel-card h3 { font-size: 1rem; }
+  .my-order { font-size: .85rem; }
+  .my-order b { font-size: .9rem; }
+  .oi-head b { font-size: .95rem; }
+  .pay-card .btn-block { font-size: .92rem; padding: 11px 14px; gap: 7px; }
+}
