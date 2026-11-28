@@ -46,7 +46,9 @@
     'eye': '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
     'copy': '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>',
     'clock': '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
-    'credit-card': '<rect x="2.5" y="5.5" width="19" height="13" rx="2.5"/><path d="M2.5 10h19M6 14.5h4"/>'
+    'credit-card': '<rect x="2.5" y="5.5" width="19" height="13" rx="2.5"/><path d="M2.5 10h19M6 14.5h4"/>',
+    'user': '<circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5"/>',
+    'wallet': '<path d="M3 7a2 2 0 0 1 2-2h13v3"/><path d="M3 7v10a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2z"/><circle cx="16.5" cy="14" r="1.2"/>'
   };
 
   /* ---------- ابزارهای سراسری ---------- */
@@ -305,6 +307,21 @@
     if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') return;
     navigator.serviceWorker.register('sw.js').catch(function () {});
   }
+
+  /* ---------- دکمهٔ پنلِ کاربری در سربرگِ همهٔ صفحه‌ها ---------- */
+  function injectAccountBtn() {
+    if (location.pathname.indexOf('/admin') !== -1) return;
+    var box = document.querySelector('.header-actions');
+    if (!box || box.querySelector('.account-btn')) return;
+    var a = document.createElement('a');
+    a.className = 'icon-btn account-btn';
+    a.href = 'account.html';
+    a.setAttribute('aria-label', 'پنلِ کاربری');
+    a.title = 'پنلِ کاربری';
+    a.innerHTML = icon('user');
+    box.insertBefore(a, box.firstChild);
+  }
+  document.addEventListener('DOMContentLoaded', injectAccountBtn);
 
   window.Nina = {
     ICONS: ICONS, icon: icon, paintIcons: paintIcons,
