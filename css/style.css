@@ -1186,3 +1186,21 @@ input:disabled { opacity: .55; }
   .track-code { font-size: .98rem; }
   .track-box { padding: 12px; }
 }
+
+/* ============================================================
+   ۹.۱۰ چینشِ خطِ سبد در موبایل + دکمهٔ دومنظوره (btn-2l)
+   ============================================================ */
+/* دکمه‌ای که متنش دو بخش دارد: هر بخش یک ردیف، مرتب و وسط‌چین */
+.btn-2l {
+  display: flex; flex-direction: column; align-items: center;
+  line-height: 1.55; gap: 1px; text-align: center;
+}
+/* خطِ سبد: در صفحهٔ باریک، نام و متا تمام‌عرض می‌شوند و
+   کم‌وزیاد به ردیفِ بعد می‌رود؛ متنِ محصول دیگر نمی‌شکند */
+@media (max-width: 600px) {
+  .cart-line { flex-wrap: wrap; row-gap: 10px; }
+  .cl-info { flex: 1 1 calc(100% - 46px); }
+  .cl-info b, .cl-meta { overflow-wrap: break-word; }
+  .cl-del { order: 2; }
+  .cl-qty { order: 3; flex-basis: 100%; justify-content: flex-start; }
+}

@@ -173,7 +173,7 @@
         trackHTML(o) +
         '<a class="btn btn-primary btn-block" id="paidBtn" target="_blank" rel="noopener" href="' +
           (wa.indexOf('wa.me') > -1 ? wa + '?text=' + encodeURIComponent(payMsg) : wa) + '">' +
-          R.icon('whatsapp') + ' پرداخت کردم — اعلام به فروشگاه</a>' +
+          R.icon('whatsapp') + '<span class="btn-2l"><span>پرداخت کردم</span><span>اعلام به فروشگاه</span></span></a>' +
         '<p class="hint">پیامِ آماده، کدِ سفارش و مبلغ را هم دارد؛ فروشگاه با همان، سفارشت را در پنل ثبت و تأیید می‌کند.</p>' +
         (st === 'mismatch' && o.remoteNote ? '<p class="hint warn-hint">' + esc(o.remoteNote) + '</p>' : '') +
       '</div>' + myOrdersHTML(o.code);
