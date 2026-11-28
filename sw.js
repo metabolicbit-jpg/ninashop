@@ -6,7 +6,7 @@
      پشتیبانِ وقتی است که شبکه دیر یا قطع باشد
    - فونت و عکس: اول حافظه (نسخه‌دار و تغییرناپذیر)، سریع مثل اپ
    ============================================================ */
-var CACHE = 'nina_v6';
+var CACHE = 'nina_v7';
 var CORE = [
   './',
   'index.html',
@@ -63,6 +63,10 @@ self.addEventListener('fetch', function (e) {
   if (req.method !== 'GET') return;
   var url = new URL(req.url);
   if (url.origin !== location.origin) return;   /* واتساپ و اینستاگرام دستِ خودِ مرورگر */
+
+  /* پنلِ مدیریت هرگز از سرویس‌ورکر رد نمی‌شود:
+     اگر کش یا قطعیِ شبکه جواب می‌داد، به‌جایِ پنل صفحهٔ اصلیِ سایت باز می‌شد */
+  if (url.pathname.indexOf('/admin') !== -1) return;
 
   var isNav = req.mode === 'navigate';
   var isData = /\.json$/.test(url.pathname);
